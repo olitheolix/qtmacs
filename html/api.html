@@ -1,0 +1,281 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Documentation &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="Qtmacs Package" href="qtmacs_autodoc.html" />
+    <link rel="prev" title="Developers" href="developers.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacs_autodoc.html" title="Qtmacs Package"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="developers.html" title="Developers"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="api-documentation">
+<span id="api"></span><h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+<p>This page lists frequently used commands grouped by class and category.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The API listed here is incomplete and devoid of examples.</p>
+</div>
+<div class="section" id="qtmacsmain">
+<h2>QtmacsMain<a class="headerlink" href="#qtmacsmain" title="Permalink to this headline">¶</a></h2>
+<p>The following methods are available to all macros and applets via their
+<tt class="docutils literal"><span class="pre">self.qteMain</span></tt> attribute, eg.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;A status message&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="layout">
+<h3>Layout<a class="headerlink" href="#layout" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteSplitApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteSplitApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteSplitApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteReplaceAppletInLayout" title="qtmacs.qtmacsmain.QtmacsMain.qteReplaceAppletInLayout"><tt class="xref py py-meth docutils literal"><span class="pre">qteReplaceAppletInLayout()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteRemoveAppletFromLayout" title="qtmacs.qtmacsmain.QtmacsMain.qteRemoveAppletFromLayout"><tt class="xref py py-meth docutils literal"><span class="pre">qteRemoveAppletFromLayout()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteKillApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteKillApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteKillApplet()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteNewWindow" title="qtmacs.qtmacsmain.QtmacsMain.qteNewWindow"><tt class="xref py py-meth docutils literal"><span class="pre">qteNewWindow()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteMakeWindowActive" title="qtmacs.qtmacsmain.QtmacsMain.qteMakeWindowActive"><tt class="xref py py-meth docutils literal"><span class="pre">qteMakeWindowActive()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteNextWindow" title="qtmacs.qtmacsmain.QtmacsMain.qteNextWindow"><tt class="xref py py-meth docutils literal"><span class="pre">qteNextWindow()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteKillWindow" title="qtmacs.qtmacsmain.QtmacsMain.qteKillWindow"><tt class="xref py py-meth docutils literal"><span class="pre">qteKillWindow()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="applets">
+<h3>Applets<a class="headerlink" href="#applets" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteNextApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteNextApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteNextApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteNewApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteNewApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteNewApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteAddMiniApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteAddMiniApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteAddMiniApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteKillMiniApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteKillMiniApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteKillMiniApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteRegisterApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteRegisterApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteRegisterApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetAllAppletIDs" title="qtmacs.qtmacsmain.QtmacsMain.qteGetAllAppletIDs"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetAllAppletIDs()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetAllAppletNames" title="qtmacs.qtmacsmain.QtmacsMain.qteGetAllAppletNames"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetAllAppletNames()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetAppletHandle" title="qtmacs.qtmacsmain.QtmacsMain.qteGetAppletHandle"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetAppletHandle()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteMakeAppletActive" title="qtmacs.qtmacsmain.QtmacsMain.qteMakeAppletActive"><tt class="xref py py-meth docutils literal"><span class="pre">qteMakeAppletActive()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="macros">
+<h3>Macros<a class="headerlink" href="#macros" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteRunMacro" title="qtmacs.qtmacsmain.QtmacsMain.qteRunMacro"><tt class="xref py py-meth docutils literal"><span class="pre">qteRunMacro()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteRegisterMacro" title="qtmacs.qtmacsmain.QtmacsMain.qteRegisterMacro"><tt class="xref py py-meth docutils literal"><span class="pre">qteRegisterMacro()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteIsMacroRegistered" title="qtmacs.qtmacsmain.QtmacsMain.qteIsMacroRegistered"><tt class="xref py py-meth docutils literal"><span class="pre">qteIsMacroRegistered()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetMacroObject" title="qtmacs.qtmacsmain.QtmacsMain.qteGetMacroObject"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetMacroObject()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetAllMacroNames" title="qtmacs.qtmacsmain.QtmacsMain.qteGetAllMacroNames"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetAllMacroNames()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="hooks">
+<h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteRunHook" title="qtmacs.qtmacsmain.QtmacsMain.qteRunHook"><tt class="xref py py-meth docutils literal"><span class="pre">qteRunHook()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteConnectHook" title="qtmacs.qtmacsmain.QtmacsMain.qteConnectHook"><tt class="xref py py-meth docutils literal"><span class="pre">qteConnectHook()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteDisconnectHook" title="qtmacs.qtmacsmain.QtmacsMain.qteDisconnectHook"><tt class="xref py py-meth docutils literal"><span class="pre">qteDisconnectHook()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="key-processing">
+<h3>Key Processing<a class="headerlink" href="#key-processing" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteBindKeyGlobal" title="qtmacs.qtmacsmain.QtmacsMain.qteBindKeyGlobal"><tt class="xref py py-meth docutils literal"><span class="pre">qteBindKeyGlobal()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteBindKeyApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteBindKeyApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteBindKeyApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteBindKeyWidget" title="qtmacs.qtmacsmain.QtmacsMain.qteBindKeyWidget"><tt class="xref py py-meth docutils literal"><span class="pre">qteBindKeyWidget()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteUnbindKeyApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteUnbindKeyApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteUnbindKeyApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteUnbindKeyFromWidgetObject" title="qtmacs.qtmacsmain.QtmacsMain.qteUnbindKeyFromWidgetObject"><tt class="xref py py-meth docutils literal"><span class="pre">qteUnbindKeyFromWidgetObject()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteUnbindAllFromApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteUnbindAllFromApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteUnbindAllFromApplet()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteUnbindAllFromWidgetObject" title="qtmacs.qtmacsmain.QtmacsMain.qteUnbindAllFromWidgetObject"><tt class="xref py py-meth docutils literal"><span class="pre">qteUnbindAllFromWidgetObject()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteCopyGlobalKeyMap" title="qtmacs.qtmacsmain.QtmacsMain.qteCopyGlobalKeyMap"><tt class="xref py py-meth docutils literal"><span class="pre">qteCopyGlobalKeyMap()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="other">
+<h3>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteUpdate" title="qtmacs.qtmacsmain.QtmacsMain.qteUpdate"><tt class="xref py py-meth docutils literal"><span class="pre">qteUpdate()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteImportModule" title="qtmacs.qtmacsmain.QtmacsMain.qteImportModule"><tt class="xref py py-meth docutils literal"><span class="pre">qteImportModule()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteCloseQtmacs" title="qtmacs.qtmacsmain.QtmacsMain.qteCloseQtmacs"><tt class="xref py py-meth docutils literal"><span class="pre">qteCloseQtmacs()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteStatus" title="qtmacs.qtmacsmain.QtmacsMain.qteStatus"><tt class="xref py py-meth docutils literal"><span class="pre">qteStatus()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteDefVar" title="qtmacs.qtmacsmain.QtmacsMain.qteDefVar"><tt class="xref py py-meth docutils literal"><span class="pre">qteDefVar()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteGetVariableDoc" title="qtmacs.qtmacsmain.QtmacsMain.qteGetVariableDoc"><tt class="xref py py-meth docutils literal"><span class="pre">qteGetVariableDoc()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsEventFilter.qteDisableMacroProcessing" title="qtmacs.qtmacsmain.QtmacsEventFilter.qteDisableMacroProcessing"><tt class="xref py py-meth docutils literal"><span class="pre">qteDisableMacroProcessing()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsEventFilter.qteEnableMacroProcessing" title="qtmacs.qtmacsmain.QtmacsEventFilter.qteEnableMacroProcessing"><tt class="xref py py-meth docutils literal"><span class="pre">qteEnableMacroProcessing()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteEmulateKeypresses" title="qtmacs.qtmacsmain.QtmacsMain.qteEmulateKeypresses"><tt class="xref py py-meth docutils literal"><span class="pre">qteEmulateKeypresses()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteIsMiniApplet" title="qtmacs.qtmacsmain.QtmacsMain.qteIsMiniApplet"><tt class="xref py py-meth docutils literal"><span class="pre">qteIsMiniApplet()</span></tt></a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="qtmacsapplet">
+<h2>QtmacsApplet<a class="headerlink" href="#qtmacsapplet" title="Permalink to this headline">¶</a></h2>
+<p>The following methods are only available from inside the
+<a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet" title="qtmacs.base_applet.QtmacsApplet"><tt class="xref py py-mod docutils literal"><span class="pre">QtmacsApplet</span></tt></a> class.</p>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteParentWindow" title="qtmacs.base_applet.QtmacsApplet.qteParentWindow"><tt class="xref py py-meth docutils literal"><span class="pre">qteParentWindow()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteAddWidget" title="qtmacs.base_applet.QtmacsApplet.qteAddWidget"><tt class="xref py py-meth docutils literal"><span class="pre">qteAddWidget()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteSetAppletSignature" title="qtmacs.base_applet.QtmacsApplet.qteSetAppletSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteSetAppletSignature()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteAppletSignature" title="qtmacs.base_applet.QtmacsApplet.qteAppletSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteAppletSignature()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteSetWidgetFocusOrder" title="qtmacs.base_applet.QtmacsApplet.qteSetWidgetFocusOrder"><tt class="xref py py-meth docutils literal"><span class="pre">qteSetWidgetFocusOrder()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteNextWidget" title="qtmacs.base_applet.QtmacsApplet.qteNextWidget"><tt class="xref py py-meth docutils literal"><span class="pre">qteNextWidget()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteMakeWidgetActive" title="qtmacs.base_applet.QtmacsApplet.qteMakeWidgetActive"><tt class="xref py py-meth docutils literal"><span class="pre">qteMakeWidgetActive()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteAppletID" title="qtmacs.base_applet.QtmacsApplet.qteAppletID"><tt class="xref py py-meth docutils literal"><span class="pre">qteAppletID()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteIsVisible" title="qtmacs.base_applet.QtmacsApplet.qteIsVisible"><tt class="xref py py-meth docutils literal"><span class="pre">qteIsVisible()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteSetReadyToKill" title="qtmacs.base_applet.QtmacsApplet.qteSetReadyToKill"><tt class="xref py py-meth docutils literal"><span class="pre">qteSetReadyToKill()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_applet.QtmacsApplet.qteReadyToKill" title="qtmacs.base_applet.QtmacsApplet.qteReadyToKill"><tt class="xref py py-meth docutils literal"><span class="pre">qteReadyToKill()</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="qtmacsmacro">
+<h2>QtmacsMacro<a class="headerlink" href="#qtmacsmacro" title="Permalink to this headline">¶</a></h2>
+<p>The following methods are only available from inside the
+<a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro" title="qtmacs.base_macro.QtmacsMacro"><tt class="xref py py-mod docutils literal"><span class="pre">QtmacsMacro</span></tt></a> class.</p>
+<ul class="simple">
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteMacroName" title="qtmacs.base_macro.QtmacsMacro.qteMacroName"><tt class="xref py py-meth docutils literal"><span class="pre">qteMacroName()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSaveMacroData" title="qtmacs.base_macro.QtmacsMacro.qteSaveMacroData"><tt class="xref py py-meth docutils literal"><span class="pre">qteSaveMacroData()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteMacroData" title="qtmacs.base_macro.QtmacsMacro.qteMacroData"><tt class="xref py py-meth docutils literal"><span class="pre">qteMacroData()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteAppletSignature" title="qtmacs.base_macro.QtmacsMacro.qteAppletSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteAppletSignature()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteWidgetSignature" title="qtmacs.base_macro.QtmacsMacro.qteWidgetSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteWidgetSignature()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSetAppletSignature" title="qtmacs.base_macro.QtmacsMacro.qteSetAppletSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteSetAppletSignature()</span></tt></a></li>
+<li><a class="reference internal" href="qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSetWidgetSignature" title="qtmacs.base_macro.QtmacsMacro.qteSetWidgetSignature"><tt class="xref py py-meth docutils literal"><span class="pre">qteSetWidgetSignature()</span></tt></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <div class="sphinxlocaltoc">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">API Documentation</a><ul>
+<li><a class="reference internal" href="#qtmacsmain">QtmacsMain</a><ul>
+<li><a class="reference internal" href="#layout">Layout</a></li>
+<li><a class="reference internal" href="#windows">Windows</a></li>
+<li><a class="reference internal" href="#applets">Applets</a></li>
+<li><a class="reference internal" href="#macros">Macros</a></li>
+<li><a class="reference internal" href="#hooks">Hooks</a></li>
+<li><a class="reference internal" href="#key-processing">Key Processing</a></li>
+<li><a class="reference internal" href="#other">Other</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#qtmacsapplet">QtmacsApplet</a></li>
+<li><a class="reference internal" href="#qtmacsmacro">QtmacsMacro</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="developers.html"
+                        title="previous chapter">Developers</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="qtmacs_autodoc.html"
+                        title="next chapter">Qtmacs Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacs_autodoc.html" title="Qtmacs Package"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="developers.html" title="Developers"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

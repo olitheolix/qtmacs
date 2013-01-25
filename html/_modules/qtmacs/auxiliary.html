@@ -1,0 +1,1528 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.auxiliary &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.auxiliary</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Qtmacs internal support classes.</span>
+
+<span class="sd">The classes and functions in this module are used by various internal</span>
+<span class="sd">modules and serve mostly administrative purposes that do not require</span>
+<span class="sd">state information of the objects that use them.</span>
+
+<span class="sd">While all classes in this file can safely be used in any applet/macro,</span>
+<span class="sd">only ``QtmacsKeysequence`` is likely be of any practical value.</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from auxiliary import something</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.qte_global</span> <span class="kn">as</span> <span class="nn">qte_global</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+
+
+<span class="c"># ----------------------------------------------------------------------</span>
+<span class="c">#                              Classes</span>
+<span class="c"># ----------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="QtmacsMessage"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsMessage">[docs]</a><span class="k">class</span> <span class="nc">QtmacsMessage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data container that is passed along with every signal or hook.</span>
+
+<span class="sd">    The ``data`` field is an arbitrary Python object and ``senderObj``</span>
+<span class="sd">    specifies the object that triggered the delivery of the message.</span>
+
+<span class="sd">    The message recipient can query both fields directly via the</span>
+<span class="sd">    ``data`` and ``senderObj`` attributes. Furthermore, the ``isHook``</span>
+<span class="sd">    flag indicates if the message was delivered via a hook (**True**)</span>
+<span class="sd">    or a signal (**False**). Finally, the ``messengerName`` attribute,</span>
+<span class="sd">    specifies the name of the signal or hook that delivered the</span>
+<span class="sd">    object.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``data`` (**object**): arbitrary. The recipient must know what to</span>
+<span class="sd">    * ``senderObj`` (**QObject**): reference to calling object.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">senderObj</span><span class="p">:</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">senderObj</span> <span class="o">=</span> <span class="n">senderObj</span>
+
+        <span class="c"># Indicate whether this message was sent by a signal or a hook.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isHook</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Name of signal (without the `qtesig` prefix) or hook.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messengerName</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMessage.setHookName"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsMessage.setHookName">[docs]</a>    <span class="k">def</span> <span class="nf">setHookName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Specify that the message will be delivered with the hook ``name``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isHook</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messengerName</span> <span class="o">=</span> <span class="n">name</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMessage.setSignalName"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsMessage.setSignalName">[docs]</a>    <span class="k">def</span> <span class="nf">setSignalName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Specify that the message will be delivered with the signal ``name``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isHook</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messengerName</span> <span class="o">=</span> <span class="n">name</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsVersionStructure"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsVersionStructure">[docs]</a><span class="k">class</span> <span class="nc">QtmacsVersionStructure</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container object to maintain version information.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * **None**</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_changed</span> <span class="o">=</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="QtmacsAdminStructure"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsAdminStructure">[docs]</a><span class="k">class</span> <span class="nc">QtmacsAdminStructure</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container object carried by every applet and widget in the</span>
+<span class="sd">    instance variable ``_qteAdmin``.</span>
+
+<span class="sd">    This class holds all the information needed by Qtmacs to</span>
+<span class="sd">    administrate its applets and widgets to avoids name space</span>
+<span class="sd">    pollution of the Qt classes.</span>
+
+<span class="sd">    As a rule of thumb, do not set any values in this object</span>
+<span class="sd">    manually. Instead, use the dedicated access methods. If there is</span>
+<span class="sd">    no such method, then the variable is like not meant to be tempered</span>
+<span class="sd">    with.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteApplet`` (**QtmacsApplet**): handle to applet holding this</span>
+<span class="sd">      either this structure directly, or the widget which holds it.</span>
+<span class="sd">    * ``appletID`` (**str**): applet ID.</span>
+<span class="sd">    * ``isFocusable`` (**bool**): whether a widget can have the focus</span>
+<span class="sd">      (ignored for``QtmacsApplets``).</span>
+<span class="sd">    * ``isQtmacsWindow`` (**bool**): whether or not the caller is</span>
+<span class="sd">      ``QtmacsMain``. This flag only exists to avoid problems with</span>
+<span class="sd">      assigning this object to ``QtmacsMain`` at start up.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteApplet</span><span class="p">,</span> <span class="n">appletID</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">isFocusable</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">isQtmacsWindow</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c"># Keep a reference to the main Qtmacs class.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">qteMain</span>
+
+        <span class="c"># Save a handle to the parent applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span> <span class="o">=</span> <span class="n">qteApplet</span>
+
+        <span class="c"># Save the applet name (a string).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appletID</span> <span class="o">=</span> <span class="n">appletID</span>
+
+        <span class="c"># Unfocusable widgets are skipped when cycling the focus.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isFocusable</span> <span class="o">=</span> <span class="n">isFocusable</span>
+
+        <span class="c"># If true, call the qteKeyPressEventBefore method of the</span>
+        <span class="c"># applet (not the widget!) before it is processed by Qtmacs.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receiveBeforeQtmacsParser</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># If true, call the qteKeyPressEventAfter method of the applet</span>
+        <span class="c"># (not the widget!) after it was processed by Qtmacs.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receiveAfterQtmacsParser</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># If True, Qtmacs will intercept the key events for this widget.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filterKeyEvents</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isQtmacsWindow</span><span class="p">:</span>
+            <span class="c"># Initially, the local key map mirrors the global one.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyMap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteCopyGlobalKeyMap</span><span class="p">()</span>
+
+        <span class="c"># Applet signature. This information determines which macros</span>
+        <span class="c"># are compatible.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appletSignature</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Widget Signature. This variable is automatically set for</span>
+        <span class="c"># every widget added via ``qteAddWidget``. If the object is</span>
+        <span class="c"># not a widget but a reference then it defaults to the string</span>
+        <span class="c"># &quot;QWidget&quot;.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">widgetSignature</span> <span class="o">=</span> <span class="s">&quot;QWidget&quot;</span>
+
+        <span class="c"># List of widgets held by this applet. The ordering of this</span>
+        <span class="c"># list determines the focus sequence.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">widgetList</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Specify whether the widget is a QtmacsApplet. The default</span>
+        <span class="c"># value is true because the qteAddWidget routine will</span>
+        <span class="c"># overwrite this flag for widgets.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isQtmacsApplet</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="c"># Specify if the applet is a mini applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isMiniApplet</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Handle to parent window. This is always **None** if the</span>
+        <span class="c"># widget is invisible. This flag is updated automatically by</span>
+        <span class="c"># the show() and hide() methods.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parentWindow</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Visibility flag. This is usually the same as Qt&#39;s native</span>
+        <span class="c"># ``isVisible`` but whereas Qt does not actually update this</span>
+        <span class="c"># flag until the event loop had a chance to paint the applet,</span>
+        <span class="c"># the isVisible flag will update as soon as the show/hide</span>
+        <span class="c"># methods are called. This extra information is necessary</span>
+        <span class="c"># because several methods in QtmacsMain make applets visible</span>
+        <span class="c"># and invisible without calling the event loop in between,</span>
+        <span class="c"># which makes it impossible to track the visibility states.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isVisible</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># This is general purpose dictionary that macros can use to</span>
+        <span class="c"># store applet specific information.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">macroData</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c"># If True, then the applet can be killed without loosing</span>
+        <span class="c"># data. This is mostly a convenience flag to facilitate a</span>
+        <span class="c"># reasonably generic kill-applet macro, but the applet</span>
+        <span class="c"># programmer is free to provide his own kill-applet macro for</span>
+        <span class="c"># his applet. That macro may use applet specific variables to</span>
+        <span class="c"># determine whether or not the applet can be safely killed and</span>
+        <span class="c"># if not, how to achieve it.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readyToKill</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsAdminStructure.qteSetKeyFilterPolicy"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsAdminStructure.qteSetKeyFilterPolicy">[docs]</a>    <span class="k">def</span> <span class="nf">qteSetKeyFilterPolicy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">receiveBefore</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                              <span class="n">useQtmacs</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                              <span class="n">receiveAfter</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the policy on how Qtmacs filters keyboard events for a</span>
+<span class="sd">        particular widgets.</span>
+
+<span class="sd">        The options can be arbitrarily combined, eg. ::</span>
+
+<span class="sd">            widget.qteSetKeyFilterPolicy(True, True, False)</span>
+
+<span class="sd">        will first pass the event to the applet&#39;s ``keyPressEvent``</span>
+<span class="sd">        method and afterwards pass the same event to Qtmacs&#39; keyboard</span>
+<span class="sd">        filter.</span>
+
+<span class="sd">        For all text-processing widgets (eg. ``QLineEdit``,</span>
+<span class="sd">        ``QTextEdit``, ``QWebView``, etc.) it is almost always a good</span>
+<span class="sd">        idea to use the default, ie. (False, True, False, False),</span>
+<span class="sd">        which lets Qtmacs process everything. In this case the only</span>
+<span class="sd">        way to interact with the widget is via macros (and the mouse).</span>
+
+<span class="sd">        If ``receiveBefore`` and/or ``receiveAfter`` is set then</span>
+<span class="sd">        ``qteKeyPressEventBefore`` and/or ``qteKeyPressEventAfter`` of</span>
+<span class="sd">        the QtmacsApplet (not widget) is called to inspect the event.</span>
+
+<span class="sd">        .. note:: The default behaviour is to let Qtmacs handle all</span>
+<span class="sd">           keyboard events and interact with the applet only via</span>
+<span class="sd">           macros. It may be more convenient for a programmer to</span>
+<span class="sd">           handle keyboard events directly in the keyPressEvent</span>
+<span class="sd">           routine, as is customary with Qt applications, but this</span>
+<span class="sd">           compromises the customisation ability of Qtmacs. As a rule</span>
+<span class="sd">           of thumb, applet classes should not implement keyPressEvent</span>
+<span class="sd">           at all. However, since there is an exception to every rule</span>
+<span class="sd">           Qtmacs allows it.</span>
+
+<span class="sd">        .. note:: This method must be part of the qteAdmin object</span>
+<span class="sd">                  because which is attached to every object under the</span>
+<span class="sd">                  control of Qtmacs.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``receiveBefore`` (**bool**): pass the keyEvent to the applet</span>
+<span class="sd">          before Qtmacs processes it.</span>
+<span class="sd">        * ``useQtmacs`` (**bool**): let Qtmacs parse the key.</span>
+<span class="sd">        * ``receiveAfter`` (**bool**): pass the keyEvent to the applet</span>
+<span class="sd">          after Qtmacs processed it.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Store key filter policy flags.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filterKeyEvents</span> <span class="o">=</span> <span class="n">useQtmacs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receiveBeforeQtmacsParser</span> <span class="o">=</span> <span class="n">receiveBefore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receiveAfterQtmacsParser</span> <span class="o">=</span> <span class="n">receiveAfter</span>
+</div>
+<div class="viewcode-block" id="QtmacsAdminStructure.keyFilterPolicy"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsAdminStructure.keyFilterPolicy">[docs]</a>    <span class="k">def</span> <span class="nf">keyFilterPolicy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the key filter policy for the current applet.</span>
+
+<span class="sd">        .. note:: This method must be part of the qteAdmin object</span>
+<span class="sd">                  because which is attached to every object under the</span>
+<span class="sd">                  control of Qtmacs.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        ``tuple``: (receiveBefore, useQtmacs, receiveAfter)</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">receiveBeforeQtmacsParser</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filterKeyEvents</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">receiveAfterQtmacsParser</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsKeysequence"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence">[docs]</a><span class="k">class</span> <span class="nc">QtmacsKeysequence</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse and represent a Qtmacs keyboard sequence.</span>
+
+<span class="sd">    Without any argument, it represents an empty sequence. If the</span>
+<span class="sd">    argument is a string or a list/tuple, then a parser attempts to</span>
+<span class="sd">    convert it into a sequence of valid ``QKeyEvent`` objects. If the</span>
+<span class="sd">    argument is another QtmacsKeysequence, then a copy of the object</span>
+<span class="sd">    is returned.</span>
+
+<span class="sd">    Examples for instantiating this object with human readable</span>
+<span class="sd">    keyboard sequences::</span>
+
+<span class="sd">        QtmacsKeysequence(&#39;&lt;ctrl&gt;+f h &lt;alt&gt;+K &lt;ctrl&gt;+k&#39;)</span>
+<span class="sd">        QtmacsKeysequence(&#39;&lt;ctrl&gt;+f &lt;ctrl&gt;+&lt;alt&gt;++ &lt;ctrl&gt;+&lt;alt&gt;+&lt;space&gt;&#39;)</span>
+<span class="sd">        QtmacsKeysequence(&#39;&lt;ctrl&gt;+f &lt;ctrl&gt;+F &lt;ctrl&gt;++ &lt;ctrl&gt;+&lt;space&gt;&#39;</span>
+<span class="sd">                          &#39;&lt;ctrl&gt;+&lt; &lt;alt&gt;+&gt; &lt; &gt; &lt;space&gt;&#39;)</span>
+
+<span class="sd">    The syntax of the string should be self explanatory. In addition,</span>
+<span class="sd">    everything in angular brackets is case insensitive, eg. &#39;&lt;ctrl&gt;-f&#39;</span>
+<span class="sd">    and &#39;&lt;CtRL&gt;-f&#39; are the same, and so is &#39;&lt;space&gt;&#39; and</span>
+<span class="sd">    &#39;&lt;SPAce&gt;&#39;. However, non-bracketed keys are case sensitive,</span>
+<span class="sd">    eg. &#39;&lt;ctrl&gt;-f&gt;&#39; is not the same as &#39;&lt;ctrl&gt;+F&#39;. Note that it is not</span>
+<span class="sd">    necessary (in fact impossible) to specify a &lt;shift&gt; modifier.</span>
+
+<span class="sd">    Keyboard combination are separated by (an arbitrary number of)</span>
+<span class="sd">    white spaces. Non-printable characters have a bracketed mnemonic,</span>
+<span class="sd">    eg. &lt;space&gt;, &lt;backspace&gt;, &lt;tab&gt;, &lt;F1&gt;. The exact list of available</span>
+<span class="sd">    characters, as well as the necessity for &lt;shift&gt; modifiers,</span>
+<span class="sd">    depends on the used OS and keyboard. The used layout is specified</span>
+<span class="sd">    in ``Qt_keymap`` variable from the global name space which</span>
+<span class="sd">    ``QtmacsMain`` sets at startup, although it utilises the</span>
+<span class="sd">    ``platform_setup.py`` module to do the actual work. That module is</span>
+<span class="sd">    also the point of entry for adding new key maps, and/or extending</span>
+<span class="sd">    existing ones.</span>
+
+<span class="sd">    Instead of specifying a human readable string it is also possible</span>
+<span class="sd">    to instantiate ``QtmacsKeyboardsequence`` with sequence of Qt</span>
+<span class="sd">    constants from the ``QtCore.Qt`` name space, for instance::</span>
+
+<span class="sd">        QtmacsKeysequence([(QtCore.Qt.ControlModifier, QtCore.Qt.Key_H),</span>
+<span class="sd">                       (QtCore.Qt.NoModifier, QtCore.Qt.Key_K)])</span>
+
+<span class="sd">    is the same as::</span>
+
+<span class="sd">        QtmacsKeysequence(&#39;&lt;ctrl&gt;+h k&#39;).</span>
+
+<span class="sd">    The macro/applet programmer is unlikely to encounter this class at</span>
+<span class="sd">    all as the methods of these classes that require keyboard</span>
+<span class="sd">    sequences (eg. ``qteBindKeyWidget``) are usually called</span>
+<span class="sd">    with human readable strings anyway because they are convenient.</span>
+<span class="sd">    However, Qtmacs internally, the only accepted way to deal with</span>
+<span class="sd">    keyboard shortcuts is via this class.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``keysequence`` (**str** or **tuple** or **list** or</span>
+<span class="sd">      **QtmacsKeysequence**)</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsKeysequenceError** if ``keysequence`` could not be parsed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keysequence</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c"># Only used when called as an iterator to yield the individual</span>
+        <span class="c"># QKeyEvents that make up the key sequence represented by this</span>
+        <span class="c"># class.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iterCnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># Get a reference to the key map for this machine. This</span>
+        <span class="c"># reference is usually set by the constructor of the</span>
+        <span class="c"># QtmacsMain class early on and should therefore be</span>
+        <span class="c"># available. If not, then something is seriously wrong.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">qte_global</span><span class="p">,</span> <span class="s">&#39;Qt_key_map&#39;</span><span class="p">):</span>
+            <span class="c"># Dictionary that maps human readable keys to Qt</span>
+            <span class="c"># constants.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyDict</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">Qt_key_map</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;&quot;Qt_key_map&quot; variable does not exist in global name space&#39;</span>
+            <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c"># Get a reference to the modifier map for this machine (set at</span>
+        <span class="c"># the same time as Qt_key_map above).</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">qte_global</span><span class="p">,</span> <span class="s">&#39;Qt_modifier_map&#39;</span><span class="p">):</span>
+            <span class="c"># Dictionary that maps modifier keys to Qt constants.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modDict</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">Qt_modifier_map</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;&quot;Qt_modifier_map&quot; variable does not exist &#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39;in global name space.&#39;</span>
+            <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c"># Make a copy of keyDict but with keys as values and vice</span>
+        <span class="c"># versa. This dictionary will be used to map the binary (Qt</span>
+        <span class="c"># internal) representation of keys to human readable values.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="c"># A list of QKeyEvent events and numerical constants from the</span>
+        <span class="c"># Qt library. Both lists represent the same key sequence and</span>
+        <span class="c"># the reset() method clears both.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistKeyEvent</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c"># Act on the argument passed to the constructor.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c"># We were passed a string --&gt; parse it to extract the key sequence.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">str2key</span><span class="p">(</span><span class="n">keysequence</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="c"># We were passed a list --&gt; parse it to extract the key sequence.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">list2key</span><span class="p">(</span><span class="n">keysequence</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="n">QtmacsKeysequence</span><span class="p">):</span>
+            <span class="c"># We were passed another QtmacsKeysequence object --&gt; copy</span>
+            <span class="c"># all its attributes.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">keylistQtConstants</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keylistKeyEvent</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">keylistKeyEvent</span>
+        <span class="k">elif</span> <span class="n">keysequence</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># We were passed nothing --&gt; do nothing.</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Argument must be either None, a string, a list, &#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39;or a QtmacsKeySequence.&#39;</span>
+            <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print a human readable version of the key sequence represented</span>
+<span class="sd">        by this object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span>
+
+<div class="viewcode-block" id="QtmacsKeysequence.reset"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flush the key sequences.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistKeyEvent</span> <span class="o">=</span> <span class="p">[]</span>
+</div>
+<div class="viewcode-block" id="QtmacsKeysequence.list2key"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.list2key">[docs]</a>    <span class="k">def</span> <span class="nf">list2key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyList</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a list of (``QtModifier``, ``QtCore.Qt.Key_*``) tuples</span>
+<span class="sd">        into a key sequence.</span>
+
+<span class="sd">        If no error is raised, then the list was accepted.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keyList`` (**list**): eg. (QtCore.Qt.ControlModifier,</span>
+<span class="sd">          QtCore.Qt.Key_F).</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsKeysequenceError** if the provided ``keysequence``</span>
+<span class="sd">            could not be parsed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">keyCombo</span> <span class="ow">in</span> <span class="n">keyList</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">keyCombo</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keyCombo</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Format of native key list is invalid.&#39;</span>
+                       <span class="s">&#39; Must be a list/tuple of list/tuples.&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keyCombo</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Format of native key list is invalid.&#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39;Each element must have exactly 2 entries.&#39;</span>
+                <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># Construct a new QKeyEvent. Note that the general</span>
+            <span class="c"># modifier (ie. &lt;ctrl&gt; and &lt;alt&gt;) still need to be</span>
+            <span class="c"># combined with shift modifier (which is never a general</span>
+            <span class="c"># modifier) if the key demands it. This combination is a</span>
+            <span class="c"># simple &quot;or&quot; on the QFlags structure. Also note that the</span>
+            <span class="c"># &quot;text&quot; argument is omitted because Qt is smart enough to</span>
+            <span class="c"># fill it internally. Furthermore, the QKeyEvent method</span>
+            <span class="c"># will raise an error if the provided key sequence makes</span>
+            <span class="c"># no sense, but to avoid raising an exception inside an</span>
+            <span class="c"># exception the QtmacsKeysequenceError is not raised</span>
+            <span class="c"># inside the exception block.</span>
+            <span class="n">key_event</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">KeyPress</span><span class="p">,</span> <span class="n">keyCombo</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                        <span class="n">keyCombo</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">key_event</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">KeyPress</span><span class="p">,</span>
+                                            <span class="n">keyCombo</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">keyCombo</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="bp">True</span>
+
+            <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Format of native key list is invalid. &#39;</span>
+                       <span class="s">&#39;Must be a list/tuple of list/tuples.&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">appendQKeyEvent</span><span class="p">(</span><span class="n">key_event</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsKeysequence.str2key"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.str2key">[docs]</a>    <span class="k">def</span> <span class="nf">str2key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyString</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse a human readable key sequence.</span>
+
+<span class="sd">        If no error is raised, then ``keyString`` could be</span>
+<span class="sd">        successfully converted into a valid key sequence and is</span>
+<span class="sd">        henceforth represented by this object.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keyString`` (**QtmacsKeysequence**): eg. &quot;&lt;ctrl&gt;+f&quot;</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsKeysequenceError** if ``keyString`` could not be parsed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Ensure the string is non-empty.</span>
+        <span class="k">if</span> <span class="n">keyString</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="s">&#39;Cannot parse empty string&#39;</span><span class="p">)</span>
+
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">keyString</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;gt;&#39;</span><span class="p">)</span>
+        <span class="n">keyStringHtml</span> <span class="o">=</span> <span class="s">&#39;&lt;b&gt;{}&lt;/b&gt;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">tmp</span>
+
+        <span class="c"># Remove leading and trailing white spaces, and reduce</span>
+        <span class="c"># sequences of white spaces to a single white space. If this</span>
+        <span class="c"># results in an emtpy string (typically the case when the user</span>
+        <span class="c"># tries to register a white space with &#39; &#39; instead of with</span>
+        <span class="c"># &#39;&lt;space&gt;&#39;) then raise an error.</span>
+        <span class="n">rawKeyStr</span> <span class="o">=</span> <span class="n">keyString</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rawKeyStr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c"># Split the string at these white spaces and convert eg.</span>
+        <span class="c"># &quot; &lt;ctrl&gt;+x &lt;ctrl&gt;+f &quot; first into</span>
+        <span class="c"># &quot;&lt;ctrl&gt;+x &lt;ctrl&gt;+f&quot; and from there into the list of</span>
+        <span class="c"># individual key combinations [&quot;&lt;ctrl&gt;+x&quot;, &quot;&lt;ctrl&gt;+f&quot;].</span>
+        <span class="n">rawKeyStr</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39; +&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">rawKeyStr</span><span class="p">)</span>
+        <span class="n">rawKeyStr</span> <span class="o">=</span> <span class="n">rawKeyStr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+
+        <span class="c"># Now process the key combinations one by one. By definition.</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">rawKeyStr</span><span class="p">:</span>
+            <span class="c"># Find all bracketed keys in the key combination</span>
+            <span class="c"># (eg. &lt;ctrl&gt;, &lt;space&gt;).</span>
+            <span class="n">desc_keys</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;&lt;.*?&gt;&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+            <span class="c"># There are four possibilities:</span>
+            <span class="c">#   * no bracketed key (eg. &quot;x&quot; or &quot;X&quot;)</span>
+            <span class="c">#   * one bracketed key (eg. &quot;&lt;ctrl&gt;+x&quot;, or just &quot;&lt;space&gt;&quot;)</span>
+            <span class="c">#   * two bracketed keys (eg. &quot;&lt;ctrl&gt;+&lt;space&gt;&quot; or &quot;&lt;ctrl&gt;+&lt;alt&gt;+f&quot;)</span>
+            <span class="c">#   * three bracketed keys (eg. &lt;ctrl&gt;+&lt;alt&gt;+&lt;space&gt;).</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">desc_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c"># No bracketed key means no modifier, so the key must</span>
+                <span class="c"># stand by itself.</span>
+                <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&lt;NONE&gt;&#39;</span><span class="p">]</span>
+                <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">desc_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s">&#39;+&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                    <span class="c"># If no &#39;+&#39; sign is present then it must be</span>
+                    <span class="c"># bracketed key without any modifier</span>
+                    <span class="c"># (eg. &quot;&lt;space&gt;&quot;).</span>
+                    <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&lt;NONE&gt;&#39;</span><span class="p">]</span>
+                    <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># Since a &#39;+&#39; sign and exactly one bracketed key</span>
+                    <span class="c"># is available, it must be a modifier plus a</span>
+                    <span class="c"># normal key (eg. &quot;&lt;ctrl&gt;+f&quot;, &quot;&lt;alt&gt;++&quot;).</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
+                    <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[:</span><span class="n">idx</span><span class="p">]]</span>
+                    <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">desc_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c"># There are either two modifiers and a normal key</span>
+                <span class="c"># (eg. &quot;&lt;ctrl&gt;+&lt;alt&gt;+x&quot;) or one modifier and one</span>
+                <span class="c"># bracketed key (eg. &quot;&lt;ctrl&gt;+&lt;space&gt;&quot;).</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">):</span>
+                    <span class="c"># A valid key combination must feature at least</span>
+                    <span class="c"># one- and at most three &quot;+&quot; symbols.</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c"># One modifier and one bracketed key</span>
+                    <span class="c"># (eg. &quot;&lt;ctrl&gt;+&lt;space&gt;&quot;).</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
+                    <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[:</span><span class="n">idx</span><span class="p">]]</span>
+                    <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+                    <span class="c"># Two modifiers and one normal key</span>
+                    <span class="c"># (eg. &quot;&lt;ctrl&gt;+&lt;alt&gt;+f&quot;, &quot;&lt;ctrl&gt;+&lt;alt&gt;++&quot;).</span>
+                    <span class="n">idx1</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
+                    <span class="n">idx2</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">,</span> <span class="n">idx1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[:</span><span class="n">idx1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="n">idx1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">idx2</span><span class="p">]]</span>
+                    <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">idx2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">desc_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="c"># There are two modifiers and one bracketed key</span>
+                    <span class="c"># (eg. &quot;&lt;ctrl&gt;+&lt;alt&gt;+&lt;space&gt;&quot;).</span>
+                    <span class="n">idx1</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">)</span>
+                    <span class="n">idx2</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;+&#39;</span><span class="p">,</span> <span class="n">idx1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[:</span><span class="n">idx1</span><span class="p">],</span> <span class="n">key</span><span class="p">[</span><span class="n">idx1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">idx2</span><span class="p">]]</span>
+                    <span class="n">keyStr</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">idx2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># A key combination with three bracketed entries</span>
+                    <span class="c"># must have exactly two &#39;+&#39; symbols. It cannot be</span>
+                    <span class="c"># valid otherwise.</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># The dictionary keys that map the modifiers and bracketed</span>
+            <span class="c"># keys to Qt constants are all upper case by</span>
+            <span class="c"># convention. Therefore, convert all modifier keys and</span>
+            <span class="c"># bracketed normal keys.</span>
+            <span class="n">modStr</span> <span class="o">=</span> <span class="p">[</span><span class="n">_</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">modStr</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">keyStr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">keyStr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&gt;&#39;</span><span class="p">):</span>
+                <span class="n">keyStr</span> <span class="o">=</span> <span class="n">keyStr</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+            <span class="c"># Convert the text version of the modifier key into the</span>
+            <span class="c"># QFlags structure used by Qt by &quot;or&quot;ing them</span>
+            <span class="c"># together. The loop is necessary because more than one</span>
+            <span class="c"># modifier may be active (eg. &lt;ctrl&gt;+&lt;alt&gt;).</span>
+            <span class="n">modQt</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">NoModifier</span>
+            <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">modStr</span><span class="p">:</span>
+                <span class="c"># Ensure that the modifier actually exists (eg. the</span>
+                <span class="c"># user might have made type like &quot;&lt;ctlr&gt;&quot; instead of</span>
+                <span class="c"># &quot;&lt;ctrl&gt;&quot;). Also, the keys in the dictionary consist</span>
+                <span class="c"># of only upper case letter for the modifier keys.</span>
+                <span class="k">if</span> <span class="n">mod</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modDict</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+                <span class="c"># Since the modifier exists in the dictionary, &quot;or&quot;</span>
+                <span class="c"># them with the other flags.</span>
+                <span class="n">modQt</span> <span class="o">=</span> <span class="n">modQt</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">modDict</span><span class="p">[</span><span class="n">mod</span><span class="p">]</span>
+
+            <span class="c"># Repeat the modifier procedure for the key. However,</span>
+            <span class="c"># unlike for the modifiers, no loop is necessary here</span>
+            <span class="c"># because only one key can be pressed at the same time.</span>
+            <span class="k">if</span> <span class="n">keyStr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDict</span><span class="p">:</span>
+                <span class="n">modQt_shift</span><span class="p">,</span> <span class="n">keyQt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDict</span><span class="p">[</span><span class="n">keyStr</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot parse the key combination {}.&#39;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyStringHtml</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QtmacsKeysequenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># Construct a new QKeyEvent. Note that the general</span>
+            <span class="c"># modifier (ie. &lt;ctrl&gt; and &lt;alt&gt;) still need to be</span>
+            <span class="c"># combined with shift modifier if the key demands it. This</span>
+            <span class="c"># combination is a simple &quot;or&quot; on the QFlags structure.</span>
+            <span class="c"># Also note that the &quot;text&quot; argument is omitted because Qt</span>
+            <span class="c"># is smart enough to determine it internally.</span>
+            <span class="n">key_event</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">KeyPress</span><span class="p">,</span> <span class="n">keyQt</span><span class="p">,</span>
+                                        <span class="n">modQt</span> <span class="o">|</span> <span class="n">modQt_shift</span><span class="p">)</span>
+
+            <span class="c"># Finally, append this key to the key sequence represented</span>
+            <span class="c"># by this object.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">appendQKeyEvent</span><span class="p">(</span><span class="n">key_event</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsKeysequence.appendQKeyEvent"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.appendQKeyEvent">[docs]</a>    <span class="k">def</span> <span class="nf">appendQKeyEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyEvent</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append another key to the key sequence represented by this object.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keyEvent`` (**QKeyEvent**): the key to add.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Store the QKeyEvent.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistKeyEvent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">keyEvent</span><span class="p">)</span>
+
+        <span class="c"># Convenience shortcuts.</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="n">keyEvent</span><span class="o">.</span><span class="n">modifiers</span><span class="p">()</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">keyEvent</span><span class="o">.</span><span class="n">key</span><span class="p">()</span>
+
+        <span class="c"># Add the modifier and key to the list. The modifier is a</span>
+        <span class="c"># QFlag structure and must by typecast to an integer to avoid</span>
+        <span class="c"># difficulties with the hashing in the ``match`` routine of</span>
+        <span class="c"># the ``QtmacsKeymap`` object.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">mod</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="QtmacsKeysequence.toQtKeylist"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.toQtKeylist">[docs]</a>    <span class="k">def</span> <span class="nf">toQtKeylist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the key sequence represented by this object as a tuple</span>
+<span class="sd">        of Qt constants.</span>
+
+<span class="sd">        The tuple contains as many elements as there are individual</span>
+<span class="sd">        key combination, each represented by a (QtModifier,</span>
+<span class="sd">        QtCore.Qt.Key_xxx) tuple itself. For instance, if the object</span>
+<span class="sd">        was created as Qtmacs(&#39;&lt;Ctrl&gt;+h k&#39;) then this function would</span>
+<span class="sd">        return the tuple ((67108864, 72), (0, 75)). Note that this</span>
+<span class="sd">        list is suitable as an argument to QtmacsKeysequence, which</span>
+<span class="sd">        would create another object representing the same key</span>
+<span class="sd">        sequence.</span>
+
+<span class="sd">        Note that the numerical constants may be machine dependent.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **list**: list of (QtModifer, Qt.Key_xxx) tuples.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsKeysequence.toQKeyEventList"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.toQKeyEventList">[docs]</a>    <span class="k">def</span> <span class="nf">toQKeyEventList</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the key sequence represented by this object as a tuple</span>
+<span class="sd">        of Qt constants.</span>
+
+<span class="sd">        The tuple contains as many elements as there are individual</span>
+<span class="sd">        key combination, each represented by a</span>
+<span class="sd">        (QtModifier, QtCore.Qt.Key_***) tuple itself. For instance, if</span>
+<span class="sd">        the object was created as Qtmacs(&#39;&lt;Ctrl&gt;+h k&#39;) then this</span>
+<span class="sd">        function would return the tuple ((67108864, 72), (0, 75)).</span>
+<span class="sd">        Note that this list is suitable as an argument to QtmacsKeysequence,</span>
+<span class="sd">        which would create another object representing the same key sequence.</span>
+
+<span class="sd">        Note that the numerical constants may be machine dependent.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **list**: list of QKeyEvents.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keylistKeyEvent</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsKeysequence.toString"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeysequence.toString">[docs]</a>    <span class="k">def</span> <span class="nf">toString</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the key sequence as a human readable string, eg. &quot;&lt;ctrl&gt;+x&quot;.</span>
+
+<span class="sd">        Note that this list is suitable as an argument to</span>
+<span class="sd">        QtmacsKeysequence, which would create another object</span>
+<span class="sd">        representing the same key sequence. If a key could not be</span>
+<span class="sd">        converted then it will be displayed as &#39;&lt;Unknown&gt;&#39;. If this</span>
+<span class="sd">        happens, then the key map in ``qte_global.default_qt_keymap``</span>
+<span class="sd">        is incomplete and should be amended accordingly.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **str**: the key sequence, eg. &#39;&lt;ctrl&gt;+f&#39;, or &#39;&lt;F1&gt;&#39;, or</span>
+<span class="sd">          &#39;&lt;Unknown&gt;&#39;.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Initialise the final output string.</span>
+        <span class="n">retVal</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">for</span> <span class="n">mod</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keylistQtConstants</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="c"># Check for any modifiers except &lt;shift&gt; and add the</span>
+            <span class="c"># corresponding string.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ControlModifier</span><span class="p">):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Ctrl&gt;+&#39;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">AltModifier</span><span class="p">):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Alt&gt;+&#39;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">MetaModifier</span><span class="p">):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Meta&gt;+&#39;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">KeypadModifier</span><span class="p">):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Keypad&gt;+&#39;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">GroupSwitchModifier</span><span class="p">):</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;GroupSwitch&gt;+&#39;</span>
+
+            <span class="c"># Format the string representation depending on whether or</span>
+            <span class="c"># not &lt;Shift&gt; is active.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">&amp;</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShiftModifier</span><span class="p">):</span>
+                <span class="c"># If the key with the shift modifier exists in the</span>
+                <span class="c"># reverse dictionary then use that string, otherwise</span>
+                <span class="c"># construct it manually be printing the modifier and</span>
+                <span class="c"># the key name. The first case is typically</span>
+                <span class="c"># encountered for upper case characters, where eg. &#39;F&#39;</span>
+                <span class="c"># is preferable over &#39;&lt;Shift&gt;+f&#39;.</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShiftModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">:</span>
+                    <span class="c"># The shift-combined key exists in the dictionary,</span>
+                    <span class="c"># so use it.</span>
+                    <span class="n">out</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">[(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShiftModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">NoModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">:</span>
+                    <span class="c"># The shift-combined key does not exists in the</span>
+                    <span class="c"># dictionary, so assemble the modifier and key by</span>
+                    <span class="c"># hand.</span>
+                    <span class="n">out</span> <span class="o">+=</span> <span class="p">(</span><span class="s">&#39;&lt;Shift&gt;+&#39;</span> <span class="o">+</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">[(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">NoModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Unknown&gt;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">NoModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyDictReverse</span><span class="p">[(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">NoModifier</span><span class="p">,</span> <span class="n">key</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;&lt;Unknown&gt;&#39;</span>
+
+            <span class="c"># Add a spacer.</span>
+            <span class="n">retVal</span> <span class="o">+=</span> <span class="n">out</span> <span class="o">+</span> <span class="s">&#39; &#39;</span>
+
+        <span class="c"># Return the final string (minus the last spacer).</span>
+        <span class="k">return</span> <span class="n">retVal</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsKeymap"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeymap">[docs]</a><span class="k">class</span> <span class="nc">QtmacsKeymap</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement the required functionality for a Qtmacs key map.</span>
+
+<span class="sd">    This class is effectively a dictionary.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    ** None **</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsKeymap.qteInsertKey"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeymap.qteInsertKey">[docs]</a>    <span class="k">def</span> <span class="nf">qteInsertKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">:</span> <span class="n">QtmacsKeysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert a new key into the key map and associate it with a</span>
+<span class="sd">        macro.</span>
+
+<span class="sd">        If the key sequence is already associated with a macro then it</span>
+<span class="sd">        will be overwritten.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keysequence`` (**QtmacsKeysequence**): associate a macro with</span>
+<span class="sd">          a key sequence in this key map.</span>
+<span class="sd">        * ``macroName`` (**str**): macro name.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Get a dedicated reference to self to facilitate traversing</span>
+        <span class="c"># through the key map.</span>
+        <span class="n">keyMap</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c"># Get the key sequence as a list of tuples, where each tuple</span>
+        <span class="c"># contains the the control modifier and the key code, and both</span>
+        <span class="c"># are specified as Qt constants.</span>
+        <span class="n">keysequence</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">toQtKeylist</span><span class="p">()</span>
+
+        <span class="c"># Traverse the shortcut sequence and generate new keys as</span>
+        <span class="c"># necessary.</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keysequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="c"># If the key does not yet exist add an empty dictionary</span>
+            <span class="c"># (it will be filled later).</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">:</span>
+                <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="c"># Similarly, if the key does exist but references anything</span>
+            <span class="c"># other than a dictionary (eg. a previously installed</span>
+            <span class="c"># ``QtmacdMacro`` instance), then delete it.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="c"># Go one level down in the key-map tree.</span>
+            <span class="n">keyMap</span> <span class="o">=</span> <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="c"># Assign the new macro object associated with this key.</span>
+        <span class="n">keyMap</span><span class="p">[</span><span class="n">keysequence</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">macroName</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsKeymap.qteRemoveKey"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeymap.qteRemoveKey">[docs]</a>    <span class="k">def</span> <span class="nf">qteRemoveKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">:</span> <span class="n">QtmacsKeysequence</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove ``keysequence`` from this key map.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keysequence`` (**QtmacsKeysequence**): key sequence to</span>
+<span class="sd">          remove from this key map.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Get a dedicated reference to self to facilitate traversing</span>
+        <span class="c"># through the key map.</span>
+        <span class="n">keyMap</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c"># Keep a reference to the root element in the key map.</span>
+        <span class="n">keyMapRef</span> <span class="o">=</span> <span class="n">keyMap</span>
+
+        <span class="c"># Get the key sequence as a list of tuples, where each tuple</span>
+        <span class="c"># contains the the control modifier and the key code, and both</span>
+        <span class="c"># are specified as Qt constants.</span>
+        <span class="n">keysequence</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">toQtKeylist</span><span class="p">()</span>
+
+        <span class="c"># ------------------------------------------------------------</span>
+        <span class="c"># Remove the leaf element from the tree.</span>
+        <span class="c"># ------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keysequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="c"># Quit if the key does not exist. This can happen if the</span>
+            <span class="c"># user tries to remove a key that has never been</span>
+            <span class="c"># registered.</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="c"># Go one level down in the key-map tree.</span>
+            <span class="n">keyMap</span> <span class="o">=</span> <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="c"># The specified key sequence does not exist if the leaf</span>
+        <span class="c"># element (ie. last entry in the key sequence) is missing.</span>
+        <span class="k">if</span> <span class="n">keysequence</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Remove the leaf.</span>
+            <span class="n">keyMap</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">keysequence</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c"># ------------------------------------------------------------</span>
+        <span class="c"># Prune the prefix path defined by ``keysequence`` and remove</span>
+        <span class="c"># all empty dictionaries. Start at the leaf level.</span>
+        <span class="c"># ------------------------------------------------------------</span>
+
+        <span class="c"># Drop the last element in the key sequence, because it was</span>
+        <span class="c"># removed in the above code fragment already.</span>
+        <span class="n">keysequence</span> <span class="o">=</span> <span class="n">keysequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c"># Now successively remove the key sequence in reverse order.</span>
+        <span class="k">while</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keysequence</span><span class="p">)):</span>
+            <span class="c"># Start at the root and move to the last branch level</span>
+            <span class="c"># before the leaf level.</span>
+            <span class="n">keyMap</span> <span class="o">=</span> <span class="n">keyMapRef</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keysequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">keyMap</span> <span class="o">=</span> <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+            <span class="c"># If the leaf is a non-empty dictionary then another key</span>
+            <span class="c"># with the same prefix still exists. In this case do</span>
+            <span class="c"># nothing. However, if the leaf is now empty it must be</span>
+            <span class="c"># removed.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]):</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">keyMap</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsKeymap.match"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsKeymap.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">:</span> <span class="n">QtmacsKeysequence</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look up the key sequence in key map.</span>
+
+<span class="sd">        If ``keysequence`` leads to a macro in the key map represented</span>
+<span class="sd">        by this object then the method returns ``(macroName,</span>
+<span class="sd">        True)``. If it does not lead to a macro but is nonetheless</span>
+<span class="sd">        valid (ie. the sequence is still incomplete), then it returns</span>
+<span class="sd">        ``(None, True)``. Finally, if the sequence cannot lead to a</span>
+<span class="sd">        macro because it is invalid then the return value is ``(None,</span>
+<span class="sd">        False)``.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keysequence`` (**QtmacsKeysequence**): associate a macro</span>
+<span class="sd">          with a key sequence in this key map.</span>
+<span class="sd">        * ``macroName`` (**str**): macro name.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        (**str**: macro name, **bool**: partial match)</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># Look up the ``keysequence`` in the current key map (ie.</span>
+            <span class="c"># this very object which inherits from ``dict``). If</span>
+            <span class="c"># ``keysequence`` does not lead to a valid macro then</span>
+            <span class="c"># return **None**.</span>
+            <span class="n">macroName</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">toQtKeylist</span><span class="p">():</span>
+                <span class="n">macroName</span> <span class="o">=</span> <span class="n">macroName</span><span class="p">[</span><span class="n">_</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c"># This error occurs if the keyboard sequence does not lead</span>
+            <span class="c"># to any macro and is therefore invalid.</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+        <span class="c"># At this point we know that the key sequence entered so far</span>
+        <span class="c"># exists. Two possibilities from here on forward: 1) the key</span>
+        <span class="c"># sequence now points to a macro or 2) the key sequence is</span>
+        <span class="c"># still incomplete.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c"># Another dictionary --&gt; key sequence is still incomplete.</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Macro object --&gt; return it.</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+
+<span class="c"># ----------------------------------------------------------------------</span>
+<span class="c">#                            Functions</span>
+<span class="c"># ----------------------------------------------------------------------</span>
+</div></div>
+<div class="viewcode-block" id="qteIsQtmacsWidget"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.qteIsQtmacsWidget">[docs]</a><span class="k">def</span> <span class="nf">qteIsQtmacsWidget</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine if a widget is part of Qtmacs widget hierarchy.</span>
+
+<span class="sd">    A widget belongs to the Qtmacs hierarchy if it, or one of its</span>
+<span class="sd">    parents, has a &quot;_qteAdmin&quot; attribute (added via ``qteAddWidget``).</span>
+<span class="sd">    Since every applet has this attribute is guaranteed that the</span>
+<span class="sd">    function returns **True** if the widget is embedded inside</span>
+<span class="sd">    somewhere.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``widgetObj`` (**QWidget**): the widget to test.</span>
+
+<span class="sd">    |Returns|</span>
+
+<span class="sd">    * **bool**: **True** if the widget, or one of its ancestors</span>
+<span class="sd">      in the Qt hierarchy have a &#39;_qteAdmin&#39; attribute.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">widgetObj</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="c"># Keep track of the already visited objects to avoid infinite loops.</span>
+    <span class="n">visited</span> <span class="o">=</span> <span class="p">[</span><span class="n">widgetObj</span><span class="p">]</span>
+
+    <span class="c"># Traverse the hierarchy until a parent features the &#39;_qteAdmin&#39;</span>
+    <span class="c"># attribute, the parent is None, or the parent is an already</span>
+    <span class="c"># visited widget.</span>
+    <span class="n">wid</span> <span class="o">=</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">wid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">wid</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">wid</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">visited</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wid</span><span class="p">)</span>
+            <span class="n">wid</span> <span class="o">=</span> <span class="n">wid</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">False</span>
+
+</div>
+<div class="viewcode-block" id="qteGetAppletFromWidget"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.qteGetAppletFromWidget">[docs]</a><span class="k">def</span> <span class="nf">qteGetAppletFromWidget</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the parent applet of ``widgetObj``.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``widgetObj`` (**QWidget**): widget (if any) for which the</span>
+<span class="sd">      containing applet is requested.</span>
+
+<span class="sd">    |Returns|</span>
+
+<span class="sd">    * **QtmacsApplet**: the applet containing ``widgetObj`` or **None**.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">widgetObj</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">qteApplet</span>
+
+    <span class="c"># Keep track of the already visited objects to avoid infinite loops.</span>
+    <span class="n">visited</span> <span class="o">=</span> <span class="p">[</span><span class="n">widgetObj</span><span class="p">]</span>
+
+    <span class="c"># Traverse the hierarchy until a parent features the &#39;_qteAdmin&#39;</span>
+    <span class="c"># attribute, the parent is None, or the parent is an already</span>
+    <span class="c"># visited widget.</span>
+    <span class="n">wid</span> <span class="o">=</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">wid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">wid</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">wid</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">qteApplet</span>
+        <span class="k">elif</span> <span class="n">wid</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">visited</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wid</span><span class="p">)</span>
+            <span class="n">wid</span> <span class="o">=</span> <span class="n">wid</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="QtmacsModeBar"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar">[docs]</a><span class="k">class</span> <span class="nc">QtmacsModeBar</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent a list of modes, each represented by a ``QLabel``.</span>
+
+<span class="sd">    The purpose of this class is to facilitate a flexible mechanims</span>
+<span class="sd">    to display various modes or status flags. It consists of a list</span>
+<span class="sd">    of modes, each with an associated value and a ``QLabel`` instance</span>
+<span class="sd">    that are lined up horizontally.</span>
+
+<span class="sd">    It is typically displayed beneath another widget eg. ``SciEditor``.</span>
+
+<span class="sd">    The class takes care that all but the rightmost label are only as</span>
+<span class="sd">    long and high as necessary.</span>
+
+<span class="sd">    A typical use case inside an applet with a ``QtmacsScintilla`` widget</span>
+<span class="sd">    could be as follows::</span>
+
+<span class="sd">        # Create a mode bar instance and add some modes.</span>
+<span class="sd">        self.qteScintilla = QtmacsScintilla(self)</span>
+<span class="sd">        self._qteModeBar = QtmacsModeBar()</span>
+<span class="sd">        self._qteModeBar.qteAddMode(&#39;EOL&#39;, &#39;U&#39;)</span>
+<span class="sd">        self._qteModeBar.qteAddMode(&#39;READONLY&#39;, &#39;R&#39;)</span>
+<span class="sd">        self._qteModeBar.qteAddMode(&#39;MODIFIED&#39;, &#39;-&#39;)</span>
+
+<span class="sd">        # Arrange the layout so that the mode bar is at the bottom.</span>
+<span class="sd">        vbox = QtGui.QVBoxLayout()</span>
+<span class="sd">        vbox.addWidget(self.qteScintilla)</span>
+<span class="sd">        vbox.addWidget(self._qteModeBar)</span>
+<span class="sd">        self.setLayout(vbox)</span>
+
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * **None**</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **None**</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_qteGetLabelInstance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an instance of a ``QLabel`` with the correct color scheme.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **QLabel**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Create a label with the proper colour appearance.</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="s">&#39;QLabel { background-color : white; color : blue; }&#39;</span>
+        <span class="n">label</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">label</span>
+
+    <span class="k">def</span> <span class="nf">_qteUpdateLabelWidths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ensure all but the last ``QLabel`` are only as wide as necessary.</span>
+
+<span class="sd">        The width of the last label is manually set to a large value to</span>
+<span class="sd">        ensure that it stretches as much as possible. The height of all</span>
+<span class="sd">        widgets is also set appropriately. The method also takes care</span>
+<span class="sd">        or rearranging the widgets in the correct order, ie. in the</span>
+<span class="sd">        order specified by ``self._qteModeList``.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span>
+        <span class="c"># Remove all labels from the list and add them again in the</span>
+        <span class="c"># new order.</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">count</span><span class="p">()):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">itemAt</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">removeItem</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="c"># Add all labels and ensure they have appropriate width.</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">fontMetrics</span><span class="p">()</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span><span class="o">.</span><span class="n">width</span><span class="p">()</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">setMinimumWidth</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="c"># Remove the width constraint from the last label so that</span>
+        <span class="c"># it can expand to the right.</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">label</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">1600000</span><span class="p">)</span>
+
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsModeBar.qteGetMode"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteGetMode">[docs]</a>    <span class="k">def</span> <span class="nf">qteGetMode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a tuple containing the ``mode``, its value, and</span>
+<span class="sd">        its associated ``QLabel`` instance.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``mode`` (**str**): size and position of new window.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * (**str**, **object**, **QLabel**: (mode, value, label).</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">item</span>
+        <span class="k">return</span> <span class="bp">None</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsModeBar.qteAddMode"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteAddMode">[docs]</a>    <span class="k">def</span> <span class="nf">qteAddMode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append label for ``mode`` and display ``value`` on it.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``mode`` (**str**): mode of mode.</span>
+<span class="sd">        * ``value`` (**object**): value of mode.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Add the label to the layout and the local mode list.</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteGetLabelInstance</span><span class="p">()</span>
+        <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mode</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteUpdateLabelWidths</span><span class="p">()</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsModeBar.qteChangeModeValue"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteChangeModeValue">[docs]</a>    <span class="k">def</span> <span class="nf">qteChangeModeValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the value of ``mode`` to ``value``.</span>
+
+<span class="sd">        If ``mode`` does not exist then nothing happens and the method</span>
+<span class="sd">        returns **False**, otherwise **True**.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``mode`` (**str**): mode of mode.</span>
+<span class="sd">        * ``value`` (**object**): value of mode.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **bool**: **True** if the item was removed and **False** if there</span>
+<span class="sd">          was an error (most likely ``mode`` does not exist).</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Search through the list for ``mode``.</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="c"># Update the displayed value in the label.</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+                <span class="c"># Overwrite the old data record with the updated one</span>
+                <span class="c"># and adjust the widths of the modes.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_qteUpdateLabelWidths</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsModeBar.qteInsertMode"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteInsertMode">[docs]</a>    <span class="k">def</span> <span class="nf">qteInsertMode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert ``mode`` at position ``pos``.</span>
+
+<span class="sd">        If ``pos`` is negative then this is equivalent to ``pos=0``. If it</span>
+<span class="sd">        is larger than the number of modes in the list then it is appended</span>
+<span class="sd">        as the last element.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``pos`` (**int**): insertion point.</span>
+<span class="sd">        * ``mode`` (**str**): name of mode.</span>
+<span class="sd">        * ``value`` (**object**) value associated with ``mode``.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Add the label to the list.</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteGetLabelInstance</span><span class="p">()</span>
+        <span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteUpdateLabelWidths</span><span class="p">()</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsModeBar.qteRemoveMode"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteRemoveMode">[docs]</a>    <span class="k">def</span> <span class="nf">qteRemoveMode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove ``mode`` and associated label.</span>
+
+<span class="sd">        If ``mode`` does not exist then nothing happens and the method</span>
+<span class="sd">        returns **False**, otherwise **True**.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``pos`` (**QRect**): size and position of new window.</span>
+<span class="sd">        * ``windowID`` (**str**): unique window ID.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **bool**: **True** if the item was removed and **False** if there</span>
+<span class="sd">          was an error (most likely ``mode`` does not exist).</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Search through the list for ``mode``.</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="c"># Remove the record and delete the label.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+                <span class="n">item</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">deleteLater</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_qteUpdateLabelWidths</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="QtmacsModeBar.qteAllModes"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.auxiliary.QtmacsModeBar.qteAllModes">[docs]</a>    <span class="k">def</span> <span class="nf">qteAllModes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``pos`` (**QRect**): size and position of new window.</span>
+<span class="sd">        * ``windowID`` (**str**): unique window ID.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **list**: a list of all modes.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteModeList</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

@@ -1,0 +1,213 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Concept &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="Applets" href="applets.html" />
+    <link rel="prev" title="A Brief Tour of Qtmacs" href="qtmacstour.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="applets.html" title="Applets"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacstour.html" title="A Brief Tour of Qtmacs"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="concept">
+<span id="id1"></span><h1>Concept<a class="headerlink" href="#concept" title="Permalink to this headline">¶</a></h1>
+<p>Qtmacs is built around Qt widgets in general. The widgets can be
+logically grouped into <em>applets</em> where they provide the means
+to eg. edit text, show an image, browse the web, or display a directory
+in a tree view.</p>
+<p>By default, all widgets react to keyboard events as
+usual. Alternatively, Qtmacs can also intercept these events for individual
+widgets, parse them for shortcuts, and execute associated macros.</p>
+<p>Macros, in turn, can contain any code and do as they
+please. Nevertheless, they tend to leverage the existing widget
+functionality to achieve a particular effect, for instance insert a
+character, scroll an image, or navigate a tree view without the
+mouse. Since macros can be swapped out at run-time and bound to
+arbitrary keyboard shortcuts, the widget- and applet behaviour can be
+customised as desired.</p>
+<p>In terms of functionality, applets may implement anything that is
+possible with Qt, including text editors, PDF viewers, shells, audio-
+and movie players, paint programs, web browsers, version control
+clients, database frontends, games...</p>
+<div class="section" id="qtmacs-is-not-emacs">
+<h2>Qtmacs is not Emacs<a class="headerlink" href="#qtmacs-is-not-emacs" title="Permalink to this headline">¶</a></h2>
+<p>Qtmacs inherits the <em>everything-is-a-macro</em> concept from Emacs but
+does not strive to be feature- or code compatible with it.</p>
+<p>Qtmacs is also not about editing text. Instead, it is about the ability
+to customise the interactions with Qt based GUI programs (ie. applets) as
+the user sees fit.</p>
+<p>Among these applets is currently the SciEditor. Its macros do indeed
+strive to emulate the basic text editing features of Emacs but they may
+nevertheless be swapped out for other macros to emulate anything from
+Notepad to Vi.</p>
+<p>Ultimately, the user &#8211; and only the user &#8211; decides which applets to
+load and, consequently, the functionality of Qtmacs. If none of the
+applets pertains to text editing, then so be it.</p>
+<p>What Qtmacs therefore can and will become is still everybody&#8217;s guess,
+but I intend to find out.</p>
+</div>
+<div class="section" id="current-state">
+<h2>Current State<a class="headerlink" href="#current-state" title="Permalink to this headline">¶</a></h2>
+<p>No major changes to the engine or the API are anticipated at the moment.
+The current focus is on developing and improving applets.</p>
+</div>
+<div class="section" id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline">¶</a></h2>
+<p>Qtmacs should eventually facilitate its own development. The primary
+obstacles towards this goal are the lack of applets and SciEditor
+macros.</p>
+<p>Some of the applets I would like to eventually have are</p>
+<ul class="simple">
+<li>version control (something as useful as Magit would be great),</li>
+<li>various shells (Bash, Matlab, Octave, Mathematica),</li>
+<li>IPython (using its qtconsole, or notebook, or both; <a class="reference external" href="https://code.google.com/p/spyderlib/">Spyder</a> is a good example),</li>
+<li>mature PDF reader (ideally without the Poppler installation hassles),</li>
+<li>mature browser with the ability to edit web forms like the SciEditor
+(within reason),</li>
+<li>anything else someone deems useful, or fun, or both.</li>
+</ul>
+</div>
+<div class="section" id="max-the-qtmacs-mascot">
+<h2>Max - The Qtmacs Mascot<a class="headerlink" href="#max-the-qtmacs-mascot" title="Permalink to this headline">¶</a></h2>
+<p>The Qtmacs mascot, <em>Max</em>, is the result of <a class="reference external" href="http://en.wikipedia.org/wiki/Qt_(framework)">pronouncing Qt</a> as &#8220;Cute&#8221;, a bad pun,
+and flawed logic: from &#8220;Qtmacs&#8221; to &#8220;Cute-macs&#8221; to &#8220;Cute Max&#8221;. Flawed
+logic then insists on a cute girl called Max as the project logo.</p>
+<p>To draw (or improve) Max yourself, I recommend <a class="reference external" href="www.youtube.com/watch?v=DFLgr6gyOOc">this clip</a> .</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <div class="sphinxlocaltoc">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Concept</a><ul>
+<li><a class="reference internal" href="#qtmacs-is-not-emacs">Qtmacs is not Emacs</a></li>
+<li><a class="reference internal" href="#current-state">Current State</a></li>
+<li><a class="reference internal" href="#next-steps">Next Steps</a></li>
+<li><a class="reference internal" href="#max-the-qtmacs-mascot">Max - The Qtmacs Mascot</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="qtmacstour.html"
+                        title="previous chapter">A Brief Tour of Qtmacs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="applets.html"
+                        title="next chapter">Applets</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/concept.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="applets.html" title="Applets"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacstour.html" title="A Brief Tour of Qtmacs"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

@@ -1,0 +1,169 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>A Brief Tour of Qtmacs &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="Concept" href="concept.html" />
+    <link rel="prev" title="Getting Qtmacs" href="installation.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="concept.html" title="Concept"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="installation.html" title="Getting Qtmacs"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="a-brief-tour-of-qtmacs">
+<span id="qtmacstour"></span><h1>A Brief Tour of Qtmacs<a class="headerlink" href="#a-brief-tour-of-qtmacs" title="Permalink to this headline">¶</a></h1>
+<p>This tour guide is as alpha as Qtmacs itself but Emacs users should feel
+right at home.</p>
+<p>To cycle through applets press <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+n</span></tt>, and to execute a macro by
+name press <tt class="docutils literal"><span class="pre">&lt;alt&gt;+x</span></tt> (use <tt class="docutils literal"><span class="pre">&lt;tab&gt;</span></tt> to get a list all macros and/or
+auto-complete the input).</p>
+<p>To spawn a new applet press <tt class="docutils literal"><span class="pre">&lt;alt&gt;+x</span></tt> and type <cite>new-applet</cite>. In the
+newly spawned input query at the bottom hit <tt class="docutils literal"><span class="pre">&lt;tab&gt;</span></tt> again to see the
+available applets. Alternatively, you may use the shortcut <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span>
+<span class="pre">&lt;ctrl&gt;+a</span></tt> to get directly to the applet query.</p>
+<p>Most commands can be aborted with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+g</span></tt>. For instance, if the
+macro query is open (<tt class="docutils literal"><span class="pre">&lt;alt&gt;+x</span></tt>) you can abort the action with
+<tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+g</span></tt>.</p>
+<p>Next, spawn the <cite>DemoMultiWidget</cite> applet (<tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+a</span></tt> and then
+type <cite>DemoMultiWidget</cite>). It consists of three widgets and you can cycle
+the focus through them with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+o</span></tt>, just as you can cycle
+through open applets with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+n</span></tt>.</p>
+<p>Applets can also be split to display more than one at a time. For the
+following demonstration to work ensure there are at least three open
+applets. Then press <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">2</span></tt> to split the active applet
+vertically, and <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">3</span></tt> to split it again horizontally. To cycle
+through the currently visible applets use <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">o</span></tt>, or hide all
+but the current applet with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">1</span></tt>.</p>
+<p>To open a new window issue the <cite>new-window</cite> macro (<tt class="docutils literal"><span class="pre">&lt;alt&gt;+x</span></tt>, then
+type <cite>new-window</cite>).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Qtmacs cannot show the same applet more than once because
+Qt does not support this feature.</p>
+</div>
+<p>To close a window run the <cite>kill-window</cite> macro (<tt class="docutils literal"><span class="pre">&lt;alt&gt;+x</span></tt> and then
+type <cite>kill-window</cite>). Similarly, to kill the active applet press
+<tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">k</span></tt>, and to kill Qtmacs as whole use <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+c</span></tt>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Getting Qtmacs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="concept.html"
+                        title="next chapter">Concept</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/qtmacstour.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="concept.html" title="Concept"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="installation.html" title="Getting Qtmacs"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

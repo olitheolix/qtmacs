@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting Qtmacs &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="A Brief Tour of Qtmacs" href="qtmacstour.html" />
+    <link rel="prev" title="The Qtmacs Project" href="titlepage.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacstour.html" title="A Brief Tour of Qtmacs"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="titlepage.html" title="The Qtmacs Project"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="getting-qtmacs">
+<span id="installation"></span><h1>Getting Qtmacs<a class="headerlink" href="#getting-qtmacs" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Permalink to this headline">¶</a></h2>
+<p>Qtmacs is currently developed with:</p>
+<ul class="simple">
+<li>Python 3.2,</li>
+<li>Qt 4.8,</li>
+<li>and PyQt 4.8.</li>
+</ul>
+<p>Older versions of Qt and Python <em>may</em> work as well, but Python 3.x is
+mandatory. Qtmacs should run on any platform supported by Python,
+Qt, and PyQt4 (ie. at least Linux/X11, Windows, and Mac).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Optional applets may require extra libraries (eg. the PDF
+applet requires <cite>Poppler</cite>).</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Installation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Qtmacs requires the Qt library and the PyQt4 bindings, including the
+<cite>Qsci</cite> (ie. Scintilla) component of PyQt4 which may be in a separate
+package (eg. <cite>python3-pyqt4.Qsci</cite> or similar).</p>
+<p>Then clone the repository and start Qtmacs with the following commands:</p>
+<div class="highlight-bash"><div class="highlight"><pre>git clone https://github.com/qtmacsdev/qtmacs.git
+<span class="nb">cd </span>qtmacs/bin
+./qtmacs.py --load ../demos/alldemos.py
+</pre></div>
+</div>
+<p>This should present you with the following startup screen.</p>
+<div class="figure">
+<img alt="_images/startup_screen.png" src="_images/startup_screen.png" style="width: 700px;" />
+</div>
+<p>For a brief introduction on how to use Qtmacs, please see the
+<a class="reference internal" href="qtmacstour.html#qtmacstour"><em>Qtmacs tour</em></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <div class="sphinxlocaltoc">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting Qtmacs</a><ul>
+<li><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li><a class="reference internal" href="#id1">Installation</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="titlepage.html"
+                        title="previous chapter">The Qtmacs Project</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="qtmacstour.html"
+                        title="next chapter">A Brief Tour of Qtmacs</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/installation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="qtmacstour.html" title="A Brief Tour of Qtmacs"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="titlepage.html" title="The Qtmacs Project"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

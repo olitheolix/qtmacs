@@ -1,0 +1,177 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Developers &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="API Documentation" href="api.html" />
+    <link rel="prev" title="Programming Qtmacs" href="tutorials.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="api.html" title="API Documentation"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="tutorials.html" title="Programming Qtmacs"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="developers">
+<span id="contribute"></span><h1>Developers<a class="headerlink" href="#developers" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="style-guide">
+<span id="styleguide"></span><h2>Style Guide<a class="headerlink" href="#style-guide" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The coding style is <a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">PEP8</a> with
+<a class="reference internal" href="#pep8exceptions"><em>these exceptions</em></a>,</li>
+<li>every module and non-trivial method must be documented,</li>
+<li>code must be annotated (the <a class="reference external" href="http://google-styleguide.googlecode.com/svn/trunk/pyguide.html">Google style guide</a> has
+good examples),</li>
+<li>method- and attribute names in Qt classes should be prefixed with &#8220;<em>qte</em>&#8221;
+(eg. <cite>qteMyMethod</cite> instead of just <cite>myMethod</cite>) to avoid
+name clashes with Qt,</li>
+<li>the code must run under Python 3.</li>
+</ul>
+<p>As for the documentation style, please look at existing code for
+templates (the <cite>qtmacs/qtmacsmain.py</cite> file is a good example).</p>
+<p>A style checker like <a class="reference external" href="http://pytest.org/latest/">pytest</a> (see
+<a class="reference external" href="http://pypi.python.org/pypi/pytest-pep8">here</a> for installation and
+usage) is also useful to spot <a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">PEP8</a> violations.</p>
+<div class="section" id="pep8-exception">
+<span id="pep8exceptions"></span><h3>PEP8 Exception<a class="headerlink" href="#pep8-exception" title="Permalink to this headline">¶</a></h3>
+<p>Class methods, method arguments, and attributes use the Qt convention
+to maintain some consistency within Qtmacs. This means that all methods
+and all their arguments use camel case notation instead of underscores
+(eg. <em>thisIsMyMethod</em> instead of <em>this_is_my_method</em>). However, local
+variables may use either style depending on preference.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <div class="sphinxlocaltoc">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developers</a><ul>
+<li><a class="reference internal" href="#style-guide">Style Guide</a><ul>
+<li><a class="reference internal" href="#pep8-exception">PEP8 Exception</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tutorials.html"
+                        title="previous chapter">Programming Qtmacs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API Documentation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/developers.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="api.html" title="API Documentation"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="tutorials.html" title="Programming Qtmacs"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

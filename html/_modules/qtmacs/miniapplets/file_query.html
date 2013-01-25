@@ -1,0 +1,604 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.miniapplets.file_query &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.miniapplets.file_query</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Mini applet template for file queries.</span>
+
+<span class="sd">The user needs to overload the ``inputCompleted`` method to implement</span>
+<span class="sd">the desired action on the chosen file name. Furthermore, the user</span>
+<span class="sd">*may* overload the ``generateCompletions`` method to tailor the</span>
+<span class="sd">default completions even further (eg. consider only &#39;pdf&#39; files).</span>
+
+<span class="sd">By default, entries can be auto completed with &lt;tab&gt; from the list of</span>
+<span class="sd">possible file name completions, but also allows other names not on the</span>
+<span class="sd">list. The class also features a history that can be traversed with</span>
+<span class="sd">&lt;alt&gt;+n and &lt;alt&gt;+p.</span>
+
+<span class="sd">The code below demonstrates how to use this class and will display the</span>
+<span class="sd">input in the status applet once the user hits enter. Put this in your</span>
+<span class="sd">configuration file, start Qtmacs, press `&lt;alt&gt;+x`, type</span>
+<span class="sd">`ExampleQuery`, and try it out::</span>
+
+<span class="sd">    class ExampleQuery(QtmacsMacro):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Use the mini applet to query a file name.</span>
+
+<span class="sd">        |Signature|</span>
+
+<span class="sd">        * *applet*: &#39;*&#39;</span>
+<span class="sd">        * *widget*: &#39;*&#39;</span>
+
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        class Query(qtmacs.miniapplets.file_query.MiniAppletFindFile):</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            Query the name of a file (always starts in the current directory).</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            def generateCompletions(self, completions):</span>
+<span class="sd">                # Retain only those files that contain an &#39;e&#39;.</span>
+<span class="sd">                return [_ for _ in completions if &#39;e&#39; in _]</span>
+
+<span class="sd">            def inputCompleted(self, userInput):</span>
+<span class="sd">                # Display the user input in the status applet.</span>
+<span class="sd">                self.qteMain.qteStatus(&#39;Selected file: &#39; + userInput);</span>
+
+<span class="sd">        def __init__(self):</span>
+<span class="sd">            super().__init__()</span>
+<span class="sd">            self.qteSetAppletSignature(&#39;*&#39;)</span>
+<span class="sd">            self.qteSetWidgetSignature(&#39;*&#39;)</span>
+
+<span class="sd">        def qteRun(self):</span>
+<span class="sd">            # Instantiate the file name query.</span>
+<span class="sd">            query = self.Query(self.qteApplet, self.qteWidget)</span>
+
+<span class="sd">            # Install the query object as the mini applet and return</span>
+<span class="sd">            # control to the event loop.</span>
+<span class="sd">            self.qteMain.qteAddMiniApplet(query)</span>
+
+<span class="sd">    # Register the macro with Qtmacs.</span>
+<span class="sd">    qteRegisterMacro(ExampleQuery)</span>
+
+<span class="sd">..note: the implementation of this query is very similar to the one in</span>
+<span class="sd">        base_query.py. The reason why this one does not inhert it is</span>
+<span class="sd">        because the history feature needs to manipulate a global module</span>
+<span class="sd">        variable.</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from file_query import *</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.miniapplets.base_query</span> <span class="kn">as</span> <span class="nn">base_query</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.base_macro</span> <span class="kn">import</span> <span class="n">QtmacsMacro</span>
+<span class="kn">from</span> <span class="nn">qtmacs.base_applet</span> <span class="kn">import</span> <span class="n">QtmacsApplet</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+
+<span class="c"># Global variables used by the macros to query and update the</span>
+<span class="c"># history. Macros using the ``MiniAppletBaseQuery`` class must</span>
+<span class="c"># point ``qteQueryHistory`` to the history (a Python list) they would</span>
+<span class="c"># like to use.</span>
+<span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">qteHistIdx</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+<div class="viewcode-block" id="AutocompleteInput"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.AutocompleteInput">[docs]</a><span class="k">class</span> <span class="nc">AutocompleteInput</span><span class="p">(</span><span class="n">base_query</span><span class="o">.</span><span class="n">AutocompleteInput</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Display all possible file completions in a dedicated applet.</span>
+
+<span class="sd">    Create (or reuse) the applet with ID &#39;\*\*Completions\*\*&#39; to</span>
+<span class="sd">    display all possible completions for the partially entered file</span>
+<span class="sd">    name.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;MiniApplet&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Fetch the text typed into the mini applet by the user</span>
+        <span class="c"># and extract purely the path name.</span>
+        <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c"># If the path is empty replace it with the root path.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span>
+
+        <span class="c"># Get a handle to the current directory and extract all files</span>
+        <span class="c"># and directories in it.</span>
+        <span class="n">curDir</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">curDir</span><span class="o">.</span><span class="n">setFilter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="o">.</span><span class="n">AllEntries</span> <span class="o">|</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="o">.</span><span class="n">NoDot</span><span class="p">)</span>
+        <span class="n">curDir</span><span class="o">.</span><span class="n">setSorting</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="o">.</span><span class="n">Name</span> <span class="o">|</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="o">.</span><span class="n">DirsFirst</span><span class="p">)</span>
+        <span class="n">curDir</span> <span class="o">=</span> <span class="n">curDir</span><span class="o">.</span><span class="n">entryInfoList</span><span class="p">()</span>
+
+        <span class="c"># Convert the list of QFileEntry obejects to strings denoting</span>
+        <span class="c"># the absolute file names (ie. path + fileName,</span>
+        <span class="c"># eg. /foo/bar.txt). Also, remove those entries that do not</span>
+        <span class="c"># contain the user input as a sub-string.</span>
+        <span class="n">completions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">curDir</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">ii</span><span class="o">.</span><span class="n">absoluteFilePath</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">userInput</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">ii</span><span class="o">.</span><span class="n">isDir</span><span class="p">():</span>
+                <span class="n">completions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">completions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c"># Call the generateCompletions method from the</span>
+        <span class="c"># ``MiniAppletBaseQuery`` class (the programmer has to</span>
+        <span class="c"># overload it).</span>
+        <span class="n">completions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">generateCompletions</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
+
+        <span class="c"># Keep only those entries which contain the user input as a</span>
+        <span class="c"># sub-string.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">completions</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">completions</span> <span class="o">=</span> <span class="p">[</span><span class="n">_</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">completions</span> <span class="k">if</span> <span class="n">userInput</span> <span class="ow">in</span> <span class="n">_</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">completions</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Auto-complete as much as possible by displaying the largest</span>
+        <span class="c"># common prefix of all possible completions. If no such prefix</span>
+        <span class="c"># exists, then do nothing as otherwise the entry field would</span>
+        <span class="c"># be wiped clean.</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonprefix</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+            <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">EndOfLine</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+        <span class="c"># If something could be completed do not proceed to</span>
+        <span class="c"># show a list of possible completions but return now.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">userInput</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c"># If the completion is not unique then list all options,</span>
+        <span class="c"># otherwise close the completions applet altogether.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">completions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">completions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="c"># Get a handle to the completions buffer or create a new</span>
+            <span class="c"># one if none exists yet.</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAppletHandle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNewApplet</span><span class="p">(</span><span class="s">&#39;RichEditor&#39;</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteSplitApplet</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+            <span class="c"># Clear the buffer and list the possible completions.</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">:</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillApplet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="QueryInput"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.QueryInput">[docs]</a><span class="k">class</span> <span class="nc">QueryInput</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Close the mini applet and process the user input.</span>
+
+<span class="sd">    This macro executes when the user hits &lt;enter&gt; to finalise the</span>
+<span class="sd">    input. The mini applet is closed and the extracted string passed</span>
+<span class="sd">    to the (overloaded) ``inputCompleted`` method in the</span>
+<span class="sd">    ``MiniAppletBaseQuery`` object.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;MiniApplet&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;MiniApplet&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">)</span>
+
+        <span class="c"># ID of the completions buffer. Note that this name is</span>
+        <span class="c"># implicitly agreed upon between this macro and the</span>
+        <span class="c"># AutocompleteInput macro. Therefore, ensure to change the</span>
+        <span class="c"># name in both locations if so desired.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span> <span class="o">=</span> <span class="s">&#39;__Buffer Completions__&#39;</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Fetch the final user input.</span>
+        <span class="n">userInput</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span>
+
+        <span class="c"># If a history list was supplied to ``MiniAppletBaseQuery``</span>
+        <span class="c"># then add the latest entry.</span>
+        <span class="k">global</span> <span class="n">qteQueryHistory</span><span class="p">,</span> <span class="n">qteHistIdx</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">qteQueryHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+            <span class="n">qteHistIdx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">)</span>
+
+        <span class="c"># Process the user input in the main object and close the mini</span>
+        <span class="c"># applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">inputCompleted</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+
+        <span class="c"># Kill the completions buffer and mini applet. The methods are</span>
+        <span class="c"># smart enough to do nothing if one or the other (or both)</span>
+        <span class="c"># do not exist anymore.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRemoveAppletFromLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillApplet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completionsAppID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillMiniApplet</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="NextInHistory"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.NextInHistory">[docs]</a><span class="k">class</span> <span class="nc">NextInHistory</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield the next-older entry in the history and display it in the</span>
+<span class="sd">    mini applet.</span>
+
+<span class="sd">    This macro will do nothing if ``MiniAppletBaseQuery`` (or the</span>
+<span class="sd">    derived class) was not instantiated with a valid Python list as</span>
+<span class="sd">    the history.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;MiniApplet&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;MiniApplet&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Return immediately if no history list exists.</span>
+        <span class="k">global</span> <span class="n">qteQueryHistory</span><span class="p">,</span> <span class="n">qteHistIdx</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c"># If no newer element is available then do nothing.</span>
+        <span class="k">if</span> <span class="n">qteHistIdx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Increment the counter to point to the next element in the history</span>
+        <span class="c"># and overwrite the entire content of the QTextEdit with the item from</span>
+        <span class="c"># the history list.</span>
+        <span class="n">qteHistIdx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">qteQueryHistory</span><span class="p">[</span><span class="n">qteHistIdx</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">EndOfLine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BackInHistory"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.BackInHistory">[docs]</a><span class="k">class</span> <span class="nc">BackInHistory</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield the next-newer entry in the history and display it in the</span>
+<span class="sd">    mini applet.</span>
+
+<span class="sd">    This macro will do nothing if ``MiniAppletBaseQuery`` (or the</span>
+<span class="sd">    derived class) was not instantiated with a valid Python list as</span>
+<span class="sd">    the history.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;MiniApplet&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;MiniApplet&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Return immediately if no history list exists.</span>
+        <span class="k">global</span> <span class="n">qteQueryHistory</span><span class="p">,</span> <span class="n">qteHistIdx</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c"># If no older element is available then do nothing.</span>
+        <span class="k">if</span> <span class="n">qteHistIdx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Decrement the counter to point to the previous element in</span>
+        <span class="c"># the history and overwrite the entire content of the</span>
+        <span class="c"># QTextEdit with the item from the history list.</span>
+        <span class="n">qteHistIdx</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">qteQueryHistory</span><span class="p">[</span><span class="n">qteHistIdx</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">EndOfLine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MiniAppletFindFile"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.MiniAppletFindFile">[docs]</a><span class="k">class</span> <span class="nc">MiniAppletFindFile</span><span class="p">(</span><span class="n">QtmacsApplet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Customisable auto completion mini applet.</span>
+
+<span class="sd">    This class facilitates an easy way to implement a custom mini</span>
+<span class="sd">    applet query complete with auto-completion and history feature. To</span>
+<span class="sd">    use this class, derive a new object from it where the virtual</span>
+<span class="sd">    ``generateCompletions`` and ``inputCompleted`` methods are</span>
+<span class="sd">    overloaded with with the desired functionality. The first method</span>
+<span class="sd">    provides a way to adapt the possible completions based on what the</span>
+<span class="sd">    user has entered so far, whereas the second method is called once</span>
+<span class="sd">    the user has finished the entry (ie. hit &lt;enter&gt;) and must</span>
+<span class="sd">    implement the logic to act upon this input. See the module</span>
+<span class="sd">    documentation for an example.</span>
+
+<span class="sd">    The ``history`` argument must be a list and will be dynamically</span>
+<span class="sd">    extended at run-time with the user entries. It is thus a good idea</span>
+<span class="sd">    to keep a reference to it alive in the calling macro in order to</span>
+<span class="sd">    preserve it between calls.</span>
+
+<span class="sd">    The ``applet`` and ``widget`` parameter are (almost) certainly the</span>
+<span class="sd">    respective ``self.qteApplet`` and ``self.qteWidget`` attributes of</span>
+<span class="sd">    the macro that instantiates this class. These pointers are</span>
+<span class="sd">    necessary because the ``generateCompletions`` and ``inputCompleted``</span>
+<span class="sd">    methods (ie. the ones to overload) are likely in need of these to</span>
+<span class="sd">    implement the desired behaviour inside the applet and widget.</span>
+
+<span class="sd">    The ``appletID`` is an arbitrary string to uniquely identify the</span>
+<span class="sd">    mini-applet. This is the same as for any other ``QtmacsApplet``</span>
+<span class="sd">    but Has hardly any practical use for mini-applet and should</span>
+<span class="sd">    probably be left blank. In that case, Qtmacs will automatically</span>
+<span class="sd">    assign a unique name of the form &#39;__DefaultQuery#{number}__&#39;.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``applet`` (**QtmacsApplet**): reference to calling applet</span>
+<span class="sd">      (typically ``self.qteApplet``).</span>
+<span class="sd">    * ``widget`` (**QWidget**): reference to calling widget</span>
+<span class="sd">      (typically ``self.qteWidget``).</span>
+<span class="sd">    * ``appletID`` (**str**): unique name of mini applet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">applet</span><span class="p">:</span> <span class="n">QtmacsApplet</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">,</span>
+                 <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">appletID</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="c"># Automatically determine a unique applet ID if none was provided.</span>
+        <span class="k">if</span> <span class="n">appletID</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">appletID</span> <span class="o">=</span> <span class="s">&#39;__DefaultQuery#{}__&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnt</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">applet</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAppletHandle</span><span class="p">(</span><span class="n">appletID</span><span class="p">):</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># Initialise the base classes and define the applet signature</span>
+        <span class="c"># (all the macros defined earlier must use this applet signature).</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">appletID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;MiniApplet&#39;</span><span class="p">)</span>
+
+        <span class="c"># Point the global variables to the user supplied history, or</span>
+        <span class="c"># **None** if it is missing.</span>
+        <span class="k">global</span> <span class="n">qteQueryHistory</span><span class="p">,</span> <span class="n">qteHistIdx</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="n">history</span>
+            <span class="n">qteHistIdx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">qteQueryHistory</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="n">qteHistIdx</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Make sure the mini applet is only as high as it has to be,</span>
+        <span class="c"># otherwise the Qt layout engine is likely to allocate it half</span>
+        <span class="c"># the vertical space (ugly!).</span>
+        <span class="n">fm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fontMetrics</span><span class="p">()</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&#39;X&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">fm</span><span class="o">.</span><span class="n">height</span><span class="p">())</span>
+
+        <span class="c"># Keep a reference to the calling applet and widget.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">widget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span> <span class="o">=</span> <span class="n">applet</span>
+
+        <span class="c"># Line up a QLabel for the &quot;Find file&quot; prefix string, and a</span>
+        <span class="c"># QTextEdit (pure text only) for the user input.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteTextPrefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteAddWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                                               <span class="n">isFocusable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteTextPrefix</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;Find file:&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteAddWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">setAcceptRichText</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="n">curDir</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QDir</span><span class="p">()</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curDir</span><span class="o">.</span><span class="n">absolutePath</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+
+        <span class="c"># At this point, the QTextEdit used in the mini applet as a</span>
+        <span class="c"># text entry field is already endowed will all the usual</span>
+        <span class="c"># macros and key-bindings for a QTextEdit (the qteAddWidget</span>
+        <span class="c"># method took care of that). However, to be useful in a mini</span>
+        <span class="c"># applet context the &lt;tab&gt; key should trigger auto-completion</span>
+        <span class="c"># instead of literally inserting a &lt;tab&gt;, and the &lt;enter&gt; key</span>
+        <span class="c"># should close the mini applet and process its input, instead</span>
+        <span class="c"># of inserting a newline. Similarly, &lt;ctrl&gt;-p and &lt;ctrl&gt;-n</span>
+        <span class="c"># should go back and forth in the history. Therefore, replace</span>
+        <span class="c"># the default macros for these keys with dedicated macros that</span>
+        <span class="c"># enact the just behaviour for the QTextEdit in the mini</span>
+        <span class="c"># applet.</span>
+
+        <span class="c"># Auto-completion.</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">AutocompleteInput</span><span class="p">,</span> <span class="n">replaceMacro</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;Tab&gt;&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="p">)</span>
+
+        <span class="c"># Process final user input.</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">QueryInput</span><span class="p">,</span> <span class="n">replaceMacro</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;Enter&gt;&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;Return&gt;&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="p">)</span>
+
+        <span class="c"># Bring up next element in the history.</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">NextInHistory</span><span class="p">,</span> <span class="n">replaceMacro</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;Alt&gt;+n&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="p">)</span>
+
+        <span class="c"># Bring up previous element in the history.</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">BackInHistory</span><span class="p">,</span> <span class="n">replaceMacro</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;Alt&gt;+p&#39;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MiniAppletFindFile.generateCompletions"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.MiniAppletFindFile.generateCompletions">[docs]</a>    <span class="k">def</span> <span class="nf">generateCompletions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the possible list of completions.</span>
+
+<span class="sd">        The ``completions`` list contains all possible file- and directory</span>
+<span class="sd">        completions as strings (directories have a traling &#39;/&#39;).</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``completions`` (**list**): list of strings. Each entry denotes one</span>
+<span class="sd">          possible completions.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **tuple, list**: a tuple/list of strings.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">completions</span>
+</div>
+<div class="viewcode-block" id="MiniAppletFindFile.inputCompleted"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.miniapplets.file_query.MiniAppletFindFile.inputCompleted">[docs]</a>    <span class="k">def</span> <span class="nf">inputCompleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Virtual: must be overloaded to implement specific action when</span>
+<span class="sd">        the user hits &lt;enter&gt;.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``userInput`` (**str**): the content of the ``QTextEdit`` when</span>
+<span class="sd">          the user hit &lt;enter&gt;.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../../titlepage.html">
+          <img class="logo" src="../../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

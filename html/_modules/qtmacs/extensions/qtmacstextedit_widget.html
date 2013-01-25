@@ -1,0 +1,464 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.extensions.qtmacstextedit_widget &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.extensions.qtmacstextedit_widget</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A drop-in replacement for ``QTextEdit`` with a more Emacs like undo</span>
+<span class="sd">behaviour.</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from qtmacstextedit_widget import *</span>
+
+<span class="sd">Here is an example::</span>
+
+<span class="sd">    from PyQt4 import QtCore, QtGui</span>
+<span class="sd">    from qtmacs.base_applet import QtmacsApplet</span>
+<span class="sd">    from qtmacs.extensions.qtmacstextedit_widget import QtmacsTextEdit</span>
+
+<span class="sd">    # Get a reference to the main instance of Qtmacs.</span>
+<span class="sd">    import qtmacs.qte_global as qte_global</span>
+<span class="sd">    qteMain = qte_global.qteMain</span>
+
+
+<span class="sd">    class TestQtmacsTextEdit(QtmacsApplet):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Demonstrate the use of ``QtmacsTextEdit`` in an applet.</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        def __init__(self, appletID):</span>
+<span class="sd">            # Initialise the base class.</span>
+<span class="sd">            super().__init__(appletID)</span>
+
+<span class="sd">            # Add a QtmacsTextEdit widget to the applet.</span>
+<span class="sd">            self.qteText = self.qteAddWidget(QtmacsTextEdit(self))</span>
+
+
+<span class="sd">    qteMain.qteRegisterApplet(TestQtmacsTextEdit)</span>
+
+<span class="sd">Put this into a file (eg. `demo.py`), run</span>
+
+<span class="sd">.. code-block:: bash</span>
+
+<span class="sd">   ./qtmacs.py demo.py</span>
+
+<span class="sd">instantiate the applet with ``&lt;ctrl&gt;+x &lt;ctrl&gt;+a``, and type</span>
+<span class="sd">&#39;TextQtmacsTextEdit&#39;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.undo_stack</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+<span class="n">QtmacsUndoCommand</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoCommand</span>
+<span class="n">QtmacsUndoStack</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoStack</span>
+
+
+<div class="viewcode-block" id="UndoGenericQtmacsTextEdit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoGenericQtmacsTextEdit">[docs]</a><span class="k">class</span> <span class="nc">UndoGenericQtmacsTextEdit</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic undo-object to revert an arbitrary change in the document.</span>
+
+<span class="sd">    This undo command takes a snapshot of the current state and</span>
+<span class="sd">    requires another snapshot from before the changes were made.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        # Backup the current state of the document for the undo</span>
+<span class="sd">        # object later.</span>
+<span class="sd">        textBefore = self.qteWidget.toHtml()</span>
+
+<span class="sd">        # ... arbitrary changes to the text in self.qteWidget.</span>
+
+<span class="sd">        # Create the generic undo object.</span>
+<span class="sd">        undoObj = UndoGenericQtmacsTextEdit(self.qteWidget, textBefore)</span>
+<span class="sd">        self.qteWidget.qteUndoStack.push(undoObj)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">before</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">before</span> <span class="o">=</span> <span class="n">before</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">after</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="UndoGenericQtmacsTextEdit.placeCursor"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoGenericQtmacsTextEdit.placeCursor">[docs]</a>    <span class="k">def</span> <span class="nf">placeCursor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Try to place the cursor in ``line`` at ``col`` if possible.</span>
+<span class="sd">        If this is not possible, then place it at the end.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()):</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">())</span>
+
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoGenericQtmacsTextEdit.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoGenericQtmacsTextEdit.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Put the document into the new state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># If this is the first &#39;commit&#39; call then do not make</span>
+            <span class="c"># any changes but store the current document state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">after</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Put the document into the edited state.</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">placeCursor</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoGenericQtmacsTextEdit.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoGenericQtmacsTextEdit.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reverse the document to the original state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">after</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">before</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">before</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">placeCursor</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoSelfInsert"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoSelfInsert">[docs]</a><span class="k">class</span> <span class="nc">UndoSelfInsert</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement the self-insert and its reverse.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``text`` (**str**): text/character to insert.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selText</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selPos</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="UndoSelfInsert.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoSelfInsert.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert the text at the current cursor position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># If this is the first ever call to this undo/redo element then</span>
+        <span class="c"># backup the current cursor position and the selected text (may be</span>
+        <span class="c"># none). This information will be required for the redo operation</span>
+        <span class="c"># to position the cursor (and selected text) where it was at the</span>
+        <span class="c"># very first call.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selText</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selStart</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionStart</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selEnd</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionEnd</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+
+        <span class="c"># Remove the originally selected text (may be none).</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selEnd</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Move to the start of the (just deleted) text block and insert</span>
+        <span class="c"># the characters there.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selStart</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+
+        <span class="c"># Backup the cursor position before the insertion operation,</span>
+        <span class="c"># insert the new character(s), move the cursor forward, and</span>
+        <span class="c"># backup the new cursor position as well.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">insertText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoSelfInsert.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoSelfInsert.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the inserted character(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># Select the area from before the insertion to after the insertion,</span>
+        <span class="c"># and remove it.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Add the previously selected text (if there was any). Note that the</span>
+        <span class="c"># text will not be &#39;selected&#39; (ie. highlighted) this time.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoPaste"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoPaste">[docs]</a><span class="k">class</span> <span class="nc">UndoPaste</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement pasting and its reverse.</span>
+
+<span class="sd">    This command can paste both text and images from the clipboard.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``data`` (**QMimeData**): MIME object.</span>
+<span class="sd">    * ``pasteCnt`` (**int**): used to uniquely enumerate the document resource</span>
+<span class="sd">        when inserting an image.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pasteCnt</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pasteCnt</span> <span class="o">=</span> <span class="n">pasteCnt</span>
+
+        <span class="c"># If an image is present, then the date is an image, otherwise</span>
+        <span class="c"># it is text.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isImage</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">hasImage</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isImage</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QImage</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">imageData</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+
+<div class="viewcode-block" id="UndoPaste.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoPaste.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert the text at the current cursor position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Backup and remove the currently selected text (may be none).</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selText</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selStart</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionStart</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selEnd</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionEnd</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Move to the start of the (just deleted) text block and insert</span>
+        <span class="c"># the characters there.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span><span class="p">)</span>
+
+        <span class="c"># If the MIME data contained an image then create a new HTML</span>
+        <span class="c"># resource for it and insert it with the HTML syntax for adding</span>
+        <span class="c"># an image. On the other hand, if the resource was simply a string,</span>
+        <span class="c"># then just add it.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isImage</span><span class="p">:</span>
+            <span class="n">imgName</span> <span class="o">=</span> <span class="s">&quot;pastedImage_{}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pasteCnt</span><span class="p">))</span>
+            <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">document</span><span class="p">()</span>
+            <span class="n">document</span><span class="o">.</span><span class="n">addResource</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextDocument</span><span class="o">.</span><span class="n">ImageResource</span><span class="p">,</span>
+                                 <span class="n">QtCore</span><span class="o">.</span><span class="n">QUrl</span><span class="p">(</span><span class="n">imgName</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setDocument</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="s">&#39;&lt;img src={}&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">imgName</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># Update the text cursor in the document.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoPaste.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.UndoPaste.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the inserted character(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Move the cursor to the right of the text to delete.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># Delete as many characters as necessary. For an image that would</span>
+        <span class="c"># be exactly 1 even though the HTML code to embed that image is usually</span>
+        <span class="c"># longer. For text, it would be as many characters as the pasted text</span>
+        <span class="c"># was long.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isImage</span><span class="p">:</span>
+            <span class="n">dataLen</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dataLen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span> <span class="o">+</span> <span class="n">dataLen</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataLen</span><span class="p">):</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">deletePreviousChar</span><span class="p">()</span>
+
+        <span class="c"># Add the previously selected text (this may be none).</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsTextEdit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.QtmacsTextEdit">[docs]</a><span class="k">class</span> <span class="nc">QtmacsTextEdit</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A drop-in replacement for ``QTextEdit`` with Emacs like undo behaviour.</span>
+
+<span class="sd">    Under the hood this class has a ``qteUndoStack`` attribute (a</span>
+<span class="sd">    ``QtmacsUndoStack`` instance) and overloaded ``undo``, ``redo``,</span>
+<span class="sd">    ``insertFromMimeData``, and ``keyPressEvent`` methods to</span>
+<span class="sd">    facilitate an Emacs like undo behaviour. Note that as a</span>
+<span class="sd">    consequence, the ``redo`` method now does nothing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># Instantiate an undo stack for this widget.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span> <span class="o">=</span> <span class="n">QtmacsUndoStack</span><span class="p">()</span>
+
+        <span class="c"># Count the number of pasted objects. This is necessary to enumerate</span>
+        <span class="c"># the images pasted into the document in order to give them unique</span>
+        <span class="c"># names.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pasteCnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="QtmacsTextEdit.insertFromMimeData"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.QtmacsTextEdit.insertFromMimeData">[docs]</a>    <span class="k">def</span> <span class="nf">insertFromMimeData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Paste the MIME data at the current cursor position.</span>
+
+<span class="sd">        This method also adds another undo-object to the undo-stack.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoPaste</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasteCnt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pasteCnt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsTextEdit.keyPressEvent"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.QtmacsTextEdit.keyPressEvent">[docs]</a>    <span class="k">def</span> <span class="nf">keyPressEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyEvent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert the character at the current cursor position.</span>
+
+<span class="sd">        This method also adds another undo-object to the undo-stack.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoSelfInsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyEvent</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsTextEdit.undo"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.QtmacsTextEdit.undo">[docs]</a>    <span class="k">def</span> <span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo the last change.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">undo</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsTextEdit.redo"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_widget.QtmacsTextEdit.redo">[docs]</a>    <span class="k">def</span> <span class="nf">redo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method does nothing anymore.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../../titlepage.html">
+          <img class="logo" src="../../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

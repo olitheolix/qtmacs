@@ -1,0 +1,1180 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.extensions.qtmacsscintilla_widget &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.extensions.qtmacsscintilla_widget</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A drop-in replacement for ``QSciScintilla`` with a more Emacs like undo</span>
+<span class="sd">behaviour.</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from qtmacs_scintilla import *</span>
+
+<span class="sd">Here is an example::</span>
+
+<span class="sd">    from PyQt4 import QtCore, QtGui</span>
+<span class="sd">    from qtmacs.base_applet import QtmacsApplet</span>
+<span class="sd">    from qtmacs.extensions.qtmacsscintilla_widget import QtmacsScintilla</span>
+
+<span class="sd">    # Get a reference to the main instance of Qtmacs.</span>
+<span class="sd">    import qtmacs.qte_global as qte_global</span>
+<span class="sd">    qteMain = qte_global.qteMain</span>
+
+
+<span class="sd">    class TestQtmacsScintilla(QtmacsApplet):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Demonstrate the use of ``QtmacsScintilla`` in an applet.</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        def __init__(self, appletID):</span>
+<span class="sd">            # Initialise the base class.</span>
+<span class="sd">            super().__init__(appletID)</span>
+
+<span class="sd">            # Add a QtmacsScintilla widget to the applet.</span>
+<span class="sd">            self.qteText = self.qteAddWidget(QtmacsScintilla(self))</span>
+
+
+<span class="sd">    qteMain.qteRegisterApplet(TestQtmacsScintilla)</span>
+
+<span class="sd">Put this into a file (eg. `demo.py`), run</span>
+
+<span class="sd">.. code-block:: bash</span>
+
+<span class="sd">   ./qtmacs.py demo.py</span>
+
+<span class="sd">instantiate the applet with ``&lt;ctrl&gt;+x &lt;ctrl&gt;+a``, and type</span>
+<span class="sd">&#39;TextQtmacsScintilla&#39;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">qtmacs.kill_list</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.undo_stack</span>
+<span class="kn">import</span> <span class="nn">qtmacs.qte_global</span> <span class="kn">as</span> <span class="nn">qte_global</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">Qsci</span>
+
+<span class="c"># Shorthands:</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+<span class="n">KillListElement</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">kill_list</span><span class="o">.</span><span class="n">KillListElement</span>
+<span class="n">QtmacsUndoStack</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoStack</span>
+<span class="n">QtmacsUndoCommand</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoCommand</span>
+
+<span class="c"># Global variables:</span>
+<span class="n">qteMain</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">qteMain</span>
+
+
+<div class="viewcode-block" id="UndoRemoveSelectedText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoRemoveSelectedText">[docs]</a><span class="k">class</span> <span class="nc">UndoRemoveSelectedText</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement ``removeSelectedText`` and its undo operation.</span>
+
+<span class="sd">    This undo object removes the selected text and places the</span>
+<span class="sd">    content into the kill list. If no text is selected then</span>
+<span class="sd">    nothing happens.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removedText</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Determine if the widget has a selection.</span>
+        <span class="k">if</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">hasSelectedText</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">getSelection</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Backup the text and style.</span>
+        <span class="n">text</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">SCIGetStyledText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removedText</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Do nothing if no selection was available upon construction.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Remove the selection.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setSelection</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Add the just killed text to the kill-list.</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">KillListElement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">removedText</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&#39;QtmacsScintilla-Text&#39;</span><span class="p">)</span>
+        <span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UndoRemoveSelectedText.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoRemoveSelectedText.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reinsert the killed word.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Do nothing if no selection was available upon construction.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Insert the text at the specified position.</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">insertAt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">removedText</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+        <span class="c"># Add the styling information.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCISetStylingEx</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+
+        <span class="c"># Place the cursor at the end of the selection.</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoReplaceSelectedText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoReplaceSelectedText">[docs]</a><span class="k">class</span> <span class="nc">UndoReplaceSelectedText</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement ``replaceSelectedText`` and its undo operation.</span>
+
+<span class="sd">    This undo object replaces the selected text with the specified</span>
+<span class="sd">    one. If no text is selected then nothing happens.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``text`` (**str**): text to replace the selection.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosNew</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oldText</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">newText</span> <span class="o">=</span> <span class="n">text</span>
+
+        <span class="c"># Update the selection position only if the widget has</span>
+        <span class="c"># one. If not, then ``commit`` and ``reverseCommit``</span>
+        <span class="c"># will both do nothing.</span>
+        <span class="k">if</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">hasSelectedText</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">getSelection</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Shorthand.</span>
+        <span class="n">wid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span>
+
+        <span class="c"># Backup the text and style.</span>
+        <span class="n">text</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oldStyle</span> <span class="o">=</span> <span class="n">wid</span><span class="o">.</span><span class="n">SCIGetStyledText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oldText</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+        <span class="c"># Replace the selected text with the new one.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">replaceSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newText</span><span class="p">)</span>
+
+        <span class="c"># Determine and backup the region occupied by the new text.</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">wid</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="o">*</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newText</span><span class="p">)</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">wid</span><span class="o">.</span><span class="n">lineIndexFromPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosNew</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">start</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">stop</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stop</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">wid</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="o">*</span><span class="n">stop</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UndoReplaceSelectedText.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoReplaceSelectedText.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reinsert the killed word.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosOld</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Shorthand.</span>
+        <span class="n">wid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span>
+
+        <span class="c"># Select, backup, and delete the selection.</span>
+        <span class="n">wid</span><span class="o">.</span><span class="n">setSelection</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPosNew</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">replaceSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">oldText</span><span class="p">)</span>
+
+        <span class="c"># Add the styling information.</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPosNew</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">wid</span><span class="o">.</span><span class="n">SCISetStylingEx</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oldStyle</span><span class="p">)</span>
+        <span class="n">wid</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoInsertAt"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoInsertAt">[docs]</a><span class="k">class</span> <span class="nc">UndoInsertAt</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement ``insertAt`` and its undo operation.</span>
+
+<span class="sd">    This undo object inserts the specified text at the specified</span>
+<span class="sd">    position. Selected text is ignored, and selections are always</span>
+<span class="sd">    cleared.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``text`` (**str**): text to insert at the specified position.</span>
+<span class="sd">    * ``line`` (**int**): line number.</span>
+<span class="sd">    * ``col`` (**int**): column number.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">=</span> <span class="n">col</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Ensure that the cursor position is valid.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Cannot redo &quot;insertAt&quot; operation because the cursor &#39;</span>
+                   <span class="s">&#39;position is invalid. The document is possibly in &#39;</span>
+                   <span class="s">&#39;an inconsistent state. Please save and re-open.&#39;</span><span class="p">)</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">insertAt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">)</span>
+
+        <span class="c"># Determine and backup the region occupied by the just</span>
+        <span class="c"># inserted text to facilitate redo (ie. removing the text).</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span><span class="p">)</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">lineIndexFromPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UndoInsertAt.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoInsertAt.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reinsert the killed word.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Ensure that the cursor position is valid.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">isSelectionPositionValid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Cannot undo &quot;insert&quot; operation because the selection&#39;</span>
+                   <span class="s">&#39;position is invalid. The document is possibly in &#39;</span>
+                   <span class="s">&#39;an inconsistent state. Please save and re-open.&#39;</span><span class="p">)</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># Select and delete the inserted text.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setSelection</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoInsert"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoInsert">[docs]</a><span class="k">class</span> <span class="nc">UndoInsert</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement ``insert`` and its undo operation.</span>
+
+<span class="sd">    This undo object inserts the specified text at the current cursor</span>
+<span class="sd">    position. Selected text is ignored, and selections are always</span>
+<span class="sd">    cleared.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``text`` (**str**): text to insert at the current position.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Ensure that the cursor position is valid.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Cannot redo &quot;insert&quot; operation because the cursor &#39;</span>
+                   <span class="s">&#39;position is invalid. The document is possibly in &#39;</span>
+                   <span class="s">&#39;an inconsistent state. Please save and re-open.&#39;</span><span class="p">)</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span><span class="p">)</span>
+
+        <span class="c"># Determine and backup the region where the text was inserted.</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insertedText</span><span class="p">)</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">lineIndexFromPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">cursorPosition</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                             <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UndoInsert.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoInsert.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reinsert the killed word.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Ensure that the cursor position is valid.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">isSelectionPositionValid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Cannot undo &quot;insert&quot; operation because the selection&#39;</span>
+                   <span class="s">&#39;position is invalid. The document is possibly in &#39;</span>
+                   <span class="s">&#39;an inconsistent state. Please save and re-open.&#39;</span><span class="p">)</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># Select and delete the inserted text.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setSelection</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectionPos</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoSetText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoSetText">[docs]</a><span class="k">class</span> <span class="nc">UndoSetText</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement ``setText`` and its undo operation.</span>
+
+<span class="sd">    This undo object removes all the text from the widget</span>
+<span class="sd">    and replaces it with a new text.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``newText`` (**str**): the new text.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">newText</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">newText</span> <span class="o">=</span> <span class="n">newText</span>
+
+        <span class="c"># Backup the text and style.</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+        <span class="n">text</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCIGetStyledText</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oldText</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UndoSetText.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoSetText.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replace the current widget content with the new text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newText</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoSetText.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoSetText.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replace the current widget content with the original text.</span>
+<span class="sd">        Note that the original text has styling information available,</span>
+<span class="sd">        whereas the new text does not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">oldText</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCISetStylingEx</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="UndoGenericQtmacsScintilla"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoGenericQtmacsScintilla">[docs]</a><span class="k">class</span> <span class="nc">UndoGenericQtmacsScintilla</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic undo-object to revert an arbitrary change in the document.</span>
+
+<span class="sd">    This undo command takes snapshot of the current document state</span>
+<span class="sd">    (including style) at instantiation, and a second snapshot at</span>
+<span class="sd">    the time it is pushed onto the stack.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        # Instantiate the undo object to get a snapshot.</span>
+<span class="sd">        undoObj = UndoGenericQtmacsScintilla(self.qteWidget)</span>
+
+<span class="sd">        # ... arbitrary changes to the text in self.qteWidget.</span>
+
+<span class="sd">        # Push the undo object to automatically generate another</span>
+<span class="sd">        # snapshot.</span>
+<span class="sd">        self.qteWidget.qteUndoStack.push(undoObj)</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">),</span> <span class="n">qteWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">textAfter</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Backup the current document (including style).</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCIGetStyledText</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">styleBefore</span> <span class="o">=</span> <span class="n">style</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">textBefore</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origPosition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+
+<div class="viewcode-block" id="UndoGenericQtmacsScintilla.placeCursor"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoGenericQtmacsScintilla.placeCursor">[docs]</a>    <span class="k">def</span> <span class="nf">placeCursor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Try to place the cursor in ``line`` at ``col`` if possible,</span>
+<span class="sd">        otherwise place it at the end.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_lines</span><span class="p">,</span> <span class="n">num_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+
+        <span class="c"># Place the cursor at the specified position if possible.</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="o">&gt;=</span> <span class="n">num_lines</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">num_lines</span><span class="p">,</span> <span class="n">num_col</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+                <span class="n">col</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoGenericQtmacsScintilla.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoGenericQtmacsScintilla.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Put the document into the new state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">textAfter</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># If this is the first &#39;commit&#39; call then do not make</span>
+            <span class="c"># any changes but store the current document state</span>
+            <span class="c"># and its style.</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+            <span class="n">text</span><span class="p">,</span> <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCIGetStyledText</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">styleAfter</span> <span class="o">=</span> <span class="n">style</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">textAfter</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Put the document into the &#39;after&#39; state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">textAfter</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCISetStylingEx</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">styleAfter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">placeCursor</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">origPosition</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoGenericQtmacsScintilla.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.UndoGenericQtmacsScintilla.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Put the document into the &#39;before&#39; state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Put the document into the &#39;before&#39; state.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseClass</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">textBefore</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">SCISetStylingEx</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">styleBefore</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsScintilla"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla">[docs]</a><span class="k">class</span> <span class="nc">QtmacsScintilla</span><span class="p">(</span><span class="n">Qsci</span><span class="o">.</span><span class="n">QsciScintilla</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A drop-in replacement for ``QsciScintilla`` with Emacs like undo behaviour.</span>
+
+<span class="sd">    Under the hood this class has a ``qteUndoStack`` attribute (a</span>
+<span class="sd">    ``QtmacsUndoStack`` instance) and overloaded ``undo``, ``redo``,</span>
+<span class="sd">    ``insertFromMimeData``, and ``keyPressEvent`` methods to</span>
+<span class="sd">    facilitate an Emacs like undo behaviour. Note that as a</span>
+<span class="sd">    consequence, the ``redo`` method now does nothing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># Instantiate an undo stack for this widget.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span> <span class="o">=</span> <span class="n">QtmacsUndoStack</span><span class="p">()</span>
+
+        <span class="c"># Make all styles have a mono space font. This being hardcoded</span>
+        <span class="c"># is somewhat of a hack but sufficient for now.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMonospace</span><span class="p">()</span>
+
+        <span class="c"># Position of last set marker (line- and column number).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMarkers</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.qteSetMark"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.qteSetMark">[docs]</a>    <span class="k">def</span> <span class="nf">qteSetMark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">markerID</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define/overwrite the line- and column index of marker ``markerID``.</span>
+
+<span class="sd">        The default marker has ``markerID=0`` by convention.</span>
+
+<span class="sd">        If ``line`` and/or ``col`` are not provided they are substituted</span>
+<span class="sd">        with the values of the current cursor position.</span>
+
+<span class="sd">        ..note: ``line`` and ``col`` are not range checked. They can therefore</span>
+<span class="sd">                take on arbitrary values (even negative ones) that do not</span>
+<span class="sd">                denote a valid position in the document.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``markerID`` (**object**): arbitrary Python object that is</span>
+<span class="sd">          internally used as a dictionary.</span>
+<span class="sd">        * ``line`` (**int**): an integer specifying the line</span>
+<span class="sd">          number of the marker.</span>
+<span class="sd">        * ``col`` (**int**): an integer specifying the column</span>
+<span class="sd">          number of the marker.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Query the line- and column number unless provided.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">line</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">col</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">line</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">col</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMarkers</span><span class="p">[</span><span class="n">markerID</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.qteGetMark"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.qteGetMark">[docs]</a>    <span class="k">def</span> <span class="nf">qteGetMark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">markerID</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the line- and column number of mark with ID ``markerID``.</span>
+
+<span class="sd">        The method returns a tuple containing the line- and column number</span>
+<span class="sd">        of the marker, or **None** if no marker with ``markerID`` exists.</span>
+
+<span class="sd">        The default marker has ``markerID=0`` by convention.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``markerID`` (**object**): arbitrary Python object that is</span>
+<span class="sd">          internally used as a dictionary.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **tuple**: line- and column number of the mark, or **None** if</span>
+<span class="sd">          ``markerID`` is invalid.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">markerID</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMarkers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMarkers</span><span class="p">[</span><span class="n">markerID</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.fromMimeData"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.fromMimeData">[docs]</a>    <span class="k">def</span> <span class="nf">fromMimeData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Paste the clipboard data at the current cursor position.</span>
+
+<span class="sd">        This method also adds another undo-object to the undo-stack.</span>
+
+<span class="sd">        ..note: This method forcefully interrupts the ``QsciInternal``</span>
+<span class="sd">                pasting mechnism by returning an empty MIME data element.</span>
+<span class="sd">                This is not an elegant implementation, but the best I</span>
+<span class="sd">                could come up with at the moment.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Only insert the element if it is available in plain text.</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">hasText</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+        <span class="c"># Tell the underlying QsciScintilla object that the MIME data</span>
+        <span class="c"># object was indeed empty.</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QByteArray</span><span class="p">(),</span> <span class="bp">False</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.getNumLinesAndColumns"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.getNumLinesAndColumns">[docs]</a>    <span class="k">def</span> <span class="nf">getNumLinesAndColumns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of lines, and columns in the last line.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **tuple**: (number of lines, number of columns in last line)</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_char_tot</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lineIndexFromPosition</span><span class="p">(</span><span class="n">num_char_tot</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.isPositionValid"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.isPositionValid">[docs]</a>    <span class="k">def</span> <span class="nf">isPositionValid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return **True** if ``line`` and ``column`` denote a valid</span>
+<span class="sd">        position.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``line`` (**int**): line number</span>
+<span class="sd">        * ``column`` (**int**): column in line ``line``</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **bool**: **True** if ``line`` and ``column`` specify a</span>
+<span class="sd">          valid point in the document, **False** otherwise.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">line</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">column</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="n">last_line</span><span class="p">,</span> <span class="n">last_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span> <span class="o">&gt;</span> <span class="n">last_line</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="n">column</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.isSelectionPositionValid"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.isSelectionPositionValid">[docs]</a>    <span class="k">def</span> <span class="nf">isSelectionPositionValid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selPos</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return **True** if the start- and end position denote valid</span>
+<span class="sd">        positions within the document.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``selPos`` (**tuple**): tuple with four integers.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **bool**: **True** if the positions are valid; **False** otherwise.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">selPos</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selPos</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">check1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="o">*</span><span class="n">selPos</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">check2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="o">*</span><span class="n">selPos</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="k">if</span> <span class="n">check1</span> <span class="ow">and</span> <span class="n">check2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.undo"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.undo">[docs]</a>    <span class="k">def</span> <span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo the last change.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">undo</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.redo"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.redo">[docs]</a>    <span class="k">def</span> <span class="nf">redo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method does nothing anymore.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.keyPressEvent"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.keyPressEvent">[docs]</a>    <span class="k">def</span> <span class="nf">keyPressEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyEvent</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``keyPressEvent`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``keyEvent`` (**QKeyEvent**): the key event to process.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoInsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyEvent</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.removeSelectedText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.removeSelectedText">[docs]</a>    <span class="k">def</span> <span class="nf">removeSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``removeSelectedText`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoRemoveSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.replaceSelectedText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.replaceSelectedText">[docs]</a>    <span class="k">def</span> <span class="nf">replaceSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``replaceSelectedText`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``text`` (**str**): text to replace the current selection.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoReplaceSelectedText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.insert"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``insert`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``text`` (**str**): text to insert at the current position.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoInsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.insertAt"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.insertAt">[docs]</a>    <span class="k">def</span> <span class="nf">insertAt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``insertAt`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``text`` (**str**): text to insert at the specified position.</span>
+<span class="sd">        * ``line`` (**int**): line number.</span>
+<span class="sd">        * ``col`` (**int**): column number.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoInsertAt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.append"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``append`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``text`` (**str**): text to insert at the specified position.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCursorPosition</span><span class="p">()</span>
+        <span class="n">line</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumLinesAndColumns</span><span class="p">()</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoInsertAt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setCursorPosition</span><span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.setText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.setText">[docs]</a>    <span class="k">def</span> <span class="nf">setText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo safe wrapper for the native ``setText`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``text`` (**str**): text to insert at the specified position.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoSetText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.SCIGetStyledText"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.SCIGetStyledText">[docs]</a>    <span class="k">def</span> <span class="nf">SCIGetStyledText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selectionPos</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pythonic wrapper for the SCI_GETSTYLEDTEXT command.</span>
+
+<span class="sd">        For example, to get the raw text and styling bits</span>
+<span class="sd">        for the first five characters in the widget use::</span>
+
+<span class="sd">            text, style = SCIGetStyledText((0, 0, 0, 5))</span>
+<span class="sd">            print(text.decode(&#39;utf-8&#39;))</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``selectionPos`` (**tuple**): selection position in the</span>
+<span class="sd">          form of (start_line, start_col, end_line, end_col).</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **tuple** of two ``bytearrays``. The first contains the</span>
+<span class="sd">          the character bytes and the second the Scintilla styling</span>
+<span class="sd">          information.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Sanity check.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isSelectionPositionValid</span><span class="p">(</span><span class="n">selectionPos</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="c"># Convert the start- and end point of the selection into</span>
+        <span class="c"># stream offsets. Ensure that start comes before end.</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="o">*</span><span class="n">selectionPos</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="o">*</span><span class="n">selectionPos</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">:</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">end</span><span class="p">,</span> <span class="n">start</span>
+
+        <span class="c"># Allocate a large enough buffer.</span>
+        <span class="n">bufSize</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">bufSize</span><span class="p">)</span>
+
+        <span class="c"># Fetch the text- and styling information.</span>
+        <span class="n">numRet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_GETSTYLEDTEXT</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">buf</span><span class="p">)</span>
+
+        <span class="c"># The last two bytes are always Zero according to the</span>
+        <span class="c"># Scintilla documentation, so remove them.</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">buf</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c"># Double check that we did not receive more bytes than the buffer</span>
+        <span class="c"># was long.</span>
+        <span class="k">if</span> <span class="n">numRet</span> <span class="o">&gt;</span> <span class="n">bufSize</span><span class="p">:</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;SCI_GETSTYLEDTEX function returned more&#39;</span>
+                                    <span class="s">&#39; bytes than expected.&#39;</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.SCISetStyling"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.SCISetStyling">[docs]</a>    <span class="k">def</span> <span class="nf">SCISetStyling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                      <span class="n">numChar</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pythonic wrapper for the SCI_SETSTYLINGEX command.</span>
+
+<span class="sd">        For example, the following code applies style #3</span>
+<span class="sd">        to the first fivie characters in the second line</span>
+<span class="sd">        of the widget:</span>
+
+<span class="sd">            SCISetStyling((0, 1), 5, 3)</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``line`` (**int**): line number where to start styling.</span>
+<span class="sd">        * ``col`` (**int**): column number where to start styling.</span>
+<span class="sd">        * ``numChar`` (**int**): number of characters to style.</span>
+<span class="sd">        * ``style`` (**int**): Scintilla style number.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_STARTSTYLING</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_SETSTYLING</span><span class="p">,</span> <span class="n">numChar</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.SCISetStylingEx"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.SCISetStylingEx">[docs]</a>    <span class="k">def</span> <span class="nf">SCISetStylingEx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pythonic wrapper for the SCI_SETSTYLINGEX command.</span>
+
+<span class="sd">        For example, the following code will fetch the</span>
+<span class="sd">        styling for the first five characters applies</span>
+<span class="sd">        it verbatim to the next five characters.</span>
+
+<span class="sd">            text, style = SCIGetStyledText((0, 0, 0, 5))</span>
+<span class="sd">            SCISetStylingEx((0, 5), style)</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``line`` (**int**): line number where to start styling.</span>
+<span class="sd">        * ``col`` (**int**): column number where to start styling.</span>
+<span class="sd">        * ``style`` (**bytearray**): Scintilla style bits.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isPositionValid</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positionFromLineIndex</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_STARTSTYLING</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_SETSTYLINGEX</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">style</span><span class="p">),</span> <span class="n">style</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.qteSetLexer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.qteSetLexer">[docs]</a>    <span class="k">def</span> <span class="nf">qteSetLexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lexer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Specify the lexer to use.</span>
+
+<span class="sd">        The only difference between this method and the native</span>
+<span class="sd">        ``setLexer`` method is that expects ``lexer`` to be class, not</span>
+<span class="sd">        an instance. Another feature is that this method knows which</span>
+<span class="sd">        ``lexer`` class was installed last, and this information can</span>
+<span class="sd">        be retrieved with ``qteLexer`` again.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``lexer`` (**QsciLexer**): lexer class (*not* instance).</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsOtherError** if lexer is not a class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">lexer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">lexer</span><span class="p">,</span> <span class="n">Qsci</span><span class="o">.</span><span class="n">QsciLexer</span><span class="p">)):</span>
+            <span class="n">QtmacsOtherError</span><span class="p">(</span><span class="s">&#39;lexer must be a class object and derived from&#39;</span>
+                             <span class="s">&#39; &lt;b&gt;QsciLexer&lt;/b&gt;&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># Install and backup the lexer class.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteLastLexer</span> <span class="o">=</span> <span class="n">lexer</span>
+        <span class="k">if</span> <span class="n">lexer</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setLexer</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setLexer</span><span class="p">(</span><span class="n">lexer</span><span class="p">())</span>
+
+        <span class="c"># Make all fonts in the style mono space.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMonospace</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.qteLexer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.qteLexer">[docs]</a>    <span class="k">def</span> <span class="nf">qteLexer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the class name of the last installed lexer object.</span>
+
+<span class="sd">        This method works in conjunction with ``qteSetLexer`` because</span>
+<span class="sd">        the native ``lexer`` method does not appear to work (it never</span>
+<span class="sd">        returns a lexer).</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteLastLexer</span>
+</div>
+<div class="viewcode-block" id="QtmacsScintilla.setMonospace"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.setMonospace">[docs]</a>    <span class="k">def</span> <span class="nf">setMonospace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fix the fonts of the first 32 styles to a mono space one.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">font</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s">&#39;courier new&#39;</span><span class="p">,</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SendScintilla</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SCI_STYLESETFONT</span><span class="p">,</span> <span class="n">ii</span><span class="p">,</span> <span class="n">font</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsScintilla.setModified"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacsscintilla_widget.QtmacsScintilla.setModified">[docs]</a>    <span class="k">def</span> <span class="nf">setModified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">isModified</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the modified state to ``isModified``.</span>
+
+<span class="sd">        From a programmer&#39;s perspective this method does the same as</span>
+<span class="sd">        the native ``QsciScintilla`` method but also ensures that the</span>
+<span class="sd">        undo framework knows when the document state was changed.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``isModified`` (**bool**): whether or not the document is considered</span>
+<span class="sd">          unmodified.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isModified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">saveState</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setModified</span><span class="p">(</span><span class="n">isModified</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../../titlepage.html">
+          <img class="logo" src="../../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

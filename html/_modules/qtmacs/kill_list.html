@@ -1,0 +1,363 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.kill_list &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.kill_list</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Provide ``QtmacsKillList`` to encapsulates the actual kill-list, and</span>
+<span class="sd">``KillListElement`` to represent each killed element.</span>
+
+<span class="sd">At startup, Qtmacs will automatically create one instance of</span>
+<span class="sd">``QtmacsKillList`` and places it into the global variable</span>
+<span class="sd">``qte_global.kill_list``. There is probably no need to create another</span>
+<span class="sd">instance of ``QtmacsKillList`` ever again unless an applet wishes to</span>
+<span class="sd">implement a local kill-list based on the same classes.</span>
+
+<span class="sd">The ``KillListElement`` container takes three arguments: a plain</span>
+<span class="sd">string, an arbitrary object, and another plain string. The first</span>
+<span class="sd">argument represents the killed element in text form, the second in an</span>
+<span class="sd">arbitrary format (eg. Html or a binary image), and the third</span>
+<span class="sd">specifies the format of the second. This specification string is</span>
+<span class="sd">completely arbitrary and if a macro cannot interpret it, then it</span>
+<span class="sd">should use the plain text version as a fallback option.</span>
+
+<span class="sd">The idea behind this system is to facilitate text copying between</span>
+<span class="sd">eg. a ``QtmacsTextEdit`` (which is a Html based rich text editor that</span>
+<span class="sd">may contain images, tables, etc.) and plain text widgets like</span>
+<span class="sd">``QLineEdit`` or ``QScintilla``, which are incapable to display the</span>
+<span class="sd">\&quot;rich\&quot; elements, but can handle the text.</span>
+
+<span class="sd">Usage example inside a macro/applet::</span>
+
+<span class="sd">    import qtmacs.kill_list as kill_list</span>
+<span class="sd">    import qtmacs.qte_global as qte_global</span>
+
+<span class="sd">    # Create an instance of KillListElement to hold the killed element.</span>
+<span class="sd">    # Provide a plain text version and a custom version (Html in this</span>
+<span class="sd">    # case).</span>
+<span class="sd">    el = kill_list.KillListElement(&#39;some bold text&#39;,</span>
+<span class="sd">                                   &#39;some &lt;b&gt;bold&lt;/b&gt; text&#39;,</span>
+<span class="sd">                                   &#39;html&#39;)</span>
+
+<span class="sd">    # Add the element to the kill-list.</span>
+<span class="sd">    qte_global.kill_list.append(el)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Import the type check decorator and make it available via a shortcut.</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+
+
+<div class="viewcode-block" id="KillListElement"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement">[docs]</a><span class="k">class</span> <span class="nc">KillListElement</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container class for every element in the kill-list.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``data_text`` (**str**): the killed element as a pure string (ie.</span>
+<span class="sd">      without any embedded data like images)</span>
+<span class="sd">    * ``data_custom`` (*): the killed element in an arbitrary format</span>
+<span class="sd">      native to the applet.</span>
+<span class="sd">    * ``data_type`` (**str**): type description of ``data_custom``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_text</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data_custom</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_text</span> <span class="o">=</span> <span class="n">data_text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_custom</span> <span class="o">=</span> <span class="n">data_custom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_type</span> <span class="o">=</span> <span class="n">data_type</span>
+
+<div class="viewcode-block" id="KillListElement.setDataText"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.setDataText">[docs]</a>    <span class="k">def</span> <span class="nf">setDataText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the content of the plain text data.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``data_text`` (**str**): the killed text as a pure string (ie.</span>
+<span class="sd">          without any embedded data like images)</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_text</span> <span class="o">=</span> <span class="n">data_text</span>
+</div>
+<div class="viewcode-block" id="KillListElement.setDataCustom"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.setDataCustom">[docs]</a>    <span class="k">def</span> <span class="nf">setDataCustom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_custom</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the content of the custom typed text.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``data_custom`` (**any**): the killed element in an arbitrary format</span>
+<span class="sd">          native to the applet.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_custom</span> <span class="o">=</span> <span class="n">data_custom</span>
+</div>
+<div class="viewcode-block" id="KillListElement.setDataType"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.setDataType">[docs]</a>    <span class="k">def</span> <span class="nf">setDataType</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the data type.</span>
+
+<span class="sd">        The data type is an arbitrary string set by the killing</span>
+<span class="sd">        macro to describe the custom data set. If the another</span>
+<span class="sd">        macro can interpret this string then it can use the</span>
+<span class="sd">        custom data, otherwise it should use the plain text data.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``data_type`` (**str**): type description of ``data_custom``.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_type</span> <span class="o">=</span> <span class="n">data_type</span>
+</div>
+<div class="viewcode-block" id="KillListElement.dataText"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.dataText">[docs]</a>    <span class="k">def</span> <span class="nf">dataText</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the data in plain text.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **str**: the killed text as pure string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_text</span>
+</div>
+<div class="viewcode-block" id="KillListElement.dataCustom"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.dataCustom">[docs]</a>    <span class="k">def</span> <span class="nf">dataCustom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the data in custom format.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **str**: the killed text as in a custom format (eg. Html).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_custom</span>
+</div>
+<div class="viewcode-block" id="KillListElement.dataType"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.KillListElement.dataType">[docs]</a>    <span class="k">def</span> <span class="nf">dataType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the type of the custom data.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **str**: the type of the custom text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_type</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsKillList"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.QtmacsKillList">[docs]</a><span class="k">class</span> <span class="nc">QtmacsKillList</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Hold the kill-list and provide access to it.</span>
+
+<span class="sd">    The kill list implements the iterator protocol and can thus</span>
+<span class="sd">    be indexed and sliced.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * **None**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kill_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kill_list</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_kill_list</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iterIdx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_iterIdx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kill_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterIdx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iterIdx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsKillList.append"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.kill_list.QtmacsKillList.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">KillListElement</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Append another element to the kill list.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``data`` (**KillListElement**): the killed element.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kill_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

@@ -1,0 +1,1058 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.qtmacsmain_macros &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.qtmacsmain_macros</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Generic macros that are neither applet- nor widget specific.</span>
+
+<span class="sd">The entry point to this module is the function</span>
+<span class="sd">``install_macros_and_bindings``. It registers all applet independent</span>
+<span class="sd">macros (eg. execute-macro, kill-window) and assigns their respective</span>
+<span class="sd">default key bindings.</span>
+
+<span class="sd">This module is called in the constructor of ``QtmacsMain`` to furnish</span>
+<span class="sd">the default functionality of Qtmacs.</span>
+
+<span class="sd">.. note: Macros are only registered if they do not yet exist. However,</span>
+<span class="sd">   if a macro with the same name already exists, then it is *not*</span>
+<span class="sd">   replaced.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">qtmacs.auxiliary</span>
+<span class="kn">import</span> <span class="nn">qtmacs.miniapplets.base_query</span>
+<span class="kn">import</span> <span class="nn">qtmacs.miniapplets.file_query</span>
+<span class="kn">import</span> <span class="nn">qtmacs.qte_global</span> <span class="kn">as</span> <span class="nn">qte_global</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.base_macro</span> <span class="kn">import</span> <span class="n">QtmacsMacro</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">QtmacsKeysequence</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsKeysequence</span>
+
+
+<span class="c"># ------------------------------------------------------------</span>
+<span class="c">#             Define the Qtmacs standard macros.</span>
+<span class="c"># ------------------------------------------------------------</span>
+<div class="viewcode-block" id="DescribeKey"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.DescribeKey">[docs]</a><span class="k">class</span> <span class="nc">DescribeKey</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Query a key sequence and display the documentation for the</span>
+<span class="sd">    associated macro.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Disable macro execution and only &quot;listen&quot; to the user typed</span>
+        <span class="c"># keys in order to provide a description once a valid key</span>
+        <span class="c"># sequence was entered.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteDisableMacroProcessing</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqComplete</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteDescribeValidKeySlot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqInvalid</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteDescribeInvalidKeySlot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&quot;Describe Next Key&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteAbort</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteDescribeInvalidKeySlot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="c"># Sequence typed so far cannot lead to a valid key sequence</span>
+        <span class="c"># anymore.</span>
+        <span class="n">keysequence</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Key &lt;b&gt;{}&lt;/b&gt; is unbound.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keysequence</span><span class="o">.</span><span class="n">toString</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteShowDocumentation</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteDescribeValidKeySlot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="n">macroName</span><span class="p">,</span> <span class="n">keysequence</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="c"># The key sequence is associated with a macro --&gt; retrieve its</span>
+        <span class="c"># doc-string.</span>
+        <span class="n">macroObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetMacroObject</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span>
+
+        <span class="c"># Double check that the macro really exists.</span>
+        <span class="k">if</span> <span class="n">macroObj</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Invalid macro object. This is a bug.&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Compile the doc-string.</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&lt;b&gt;{}&lt;/b&gt; runs the macro &lt;b&gt;{}&lt;/b&gt;.</span><span class="se">\n</span><span class="s">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">))</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">macroObj</span><span class="o">.</span><span class="n">__doc__</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="n">macroObj</span><span class="o">.</span><span class="n">__doc__</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&quot;No description available.&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteShowDocumentation</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteShowDocumentation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="c"># Reset the macro and re-enable event processing.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteAbort</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteEnableMacroProcessing</span><span class="p">()</span>
+
+        <span class="c"># Get handle to the help window applet (create a new applet if</span>
+        <span class="c"># necessary).</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAppletHandle</span><span class="p">(</span><span class="s">&#39;**Help**&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNewApplet</span><span class="p">(</span><span class="s">&#39;RichEditor&#39;</span><span class="p">,</span> <span class="s">&#39;**Help**&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteSplitApplet</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+        <span class="c"># Ensure the applet is visible and empty.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">qteIsVisible</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteSplitApplet</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">insertPlainText</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteAbort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="c"># Disconnect the signals.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqComplete</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteDescribeValidKeySlot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqInvalid</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteDescribeInvalidKeySlot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteAbort</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ReplayKeysequence"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.ReplayKeysequence">[docs]</a><span class="k">class</span> <span class="nc">ReplayKeysequence</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replay a previously recorded key sequence.</span>
+
+<span class="sd">    If no keys have been recorded yet then nothing happens. If the key</span>
+<span class="sd">    recording is still in progress then the recording process will be</span>
+<span class="sd">    terminated prior to the replay.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># The entire macro- recording and replay happens in the</span>
+        <span class="c"># ``RecordKeysequenceCore`` class and is triggered with</span>
+        <span class="c"># hooks. Therefore, trigger the replay hook here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunHook</span><span class="p">(</span><span class="s">&#39;record-macro-replay&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="RecordKeysequenceStart"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceStart">[docs]</a><span class="k">class</span> <span class="nc">RecordKeysequenceStart</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Start recording the key sequence.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># The entire macro- recording and replay happens in the</span>
+        <span class="c"># ``RecordKeysequenceCore`` class and is triggered with</span>
+        <span class="c"># hooks. Therefore, trigger the start-recording hook here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunHook</span><span class="p">(</span><span class="s">&#39;record-macro-start&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="RecordKeysequenceStop"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceStop">[docs]</a><span class="k">class</span> <span class="nc">RecordKeysequenceStop</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stop recording the key sequence.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># The entire macro- recording and replay happens in the</span>
+        <span class="c"># ``RecordKeysequenceCore`` class and is triggered with</span>
+        <span class="c"># hooks. Therefore, trigger the start-recording hook here.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunHook</span><span class="p">(</span><span class="s">&#39;record-macro-stop&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="RecordKeysequenceCore"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceCore">[docs]</a><span class="k">class</span> <span class="nc">RecordKeysequenceCore</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manage the key sequence recording and replay.</span>
+
+<span class="sd">    This macro can only be controlled via the</span>
+<span class="sd">    record-keysequence-{start,stop,replay} macros.</span>
+
+<span class="sd">    The last recorded list of of key events is available for all in</span>
+<span class="sd">    the global variable ``recorded_keysequence``.</span>
+
+<span class="sd">    .. warning:: the recording a key sequence that triggers the</span>
+<span class="sd">       recording of another key sequence will result in an infinite</span>
+<span class="sd">       loop upon the second replay. It is probably impossible to endow</span>
+<span class="sd">       this macro with the ability to detect it because the recorded</span>
+<span class="sd">       macros are all queued at once, and Qtmacs will then issue them</span>
+<span class="sd">       one by one. It might well be necessary to make macro- recording</span>
+<span class="sd">       and replay a feature of QtmacsMain that can be triggered by</span>
+<span class="sd">       macros, but not influenced by them.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="c"># The recorded key sequence.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recorded_keysequence</span> <span class="o">=</span> <span class="n">QtmacsKeysequence</span><span class="p">()</span>
+
+        <span class="c"># Control flags.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Connect the methods with which this macro is controlled.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteConnectHook</span><span class="p">(</span><span class="s">&#39;record-macro-start&#39;</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">qteStartRecordingHook</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteConnectHook</span><span class="p">(</span><span class="s">&#39;record-macro-stop&#39;</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">qteStopRecordingHook</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteConnectHook</span><span class="p">(</span><span class="s">&#39;record-macro-replay&#39;</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">qteReplayKeysequenceHook</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># This macro does do anything. All its functionality is</span>
+        <span class="c"># triggered via hooks from the RecordMacro{Start,Stop,Replay}.</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="RecordKeysequenceCore.qteStartRecordingHook"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceCore.qteStartRecordingHook">[docs]</a>    <span class="k">def</span> <span class="nf">qteStartRecordingHook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Commence macro recording.</span>
+
+<span class="sd">        Macros are recorded by connecting to the &#39;keypressed&#39; signal</span>
+<span class="sd">        it emits.</span>
+
+<span class="sd">        If the recording has already commenced, or if this method was</span>
+<span class="sd">        called during a macro replay, then return immediately.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;Macro recording already enabled&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># Update status flag.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="c"># Reset the variables.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;Macro recording started&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recorded_keysequence</span> <span class="o">=</span> <span class="n">QtmacsKeysequence</span><span class="p">()</span>
+
+        <span class="c"># Connect the &#39;keypressed&#39; and &#39;abort&#39; signals.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteStopRecordingHook</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="RecordKeysequenceCore.qteStopRecordingHook"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceCore.qteStopRecordingHook">[docs]</a>    <span class="k">def</span> <span class="nf">qteStopRecordingHook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop macro recording.</span>
+
+<span class="sd">        The signals from the event handler are disconnected and the</span>
+<span class="sd">        event handler policy set to default.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Update status flag and disconnect all signals.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;Macro recording stopped&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteStopRecordingHook</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="RecordKeysequenceCore.qteReplayKeysequenceHook"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceCore.qteReplayKeysequenceHook">[docs]</a>    <span class="k">def</span> <span class="nf">qteReplayKeysequenceHook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replay the macro sequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Quit if there is nothing to replay.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recorded_keysequence</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Stop the recording before the replay, if necessary.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteRecording</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Simulate the key presses.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteEmulateKeypresses</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recorded_keysequence</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="RecordKeysequenceCore.qteKeyPress"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RecordKeysequenceCore.qteKeyPress">[docs]</a>    <span class="k">def</span> <span class="nf">qteKeyPress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record the key presses reported by the key handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="p">(</span><span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="c"># Append the last QKeyEvent object to the so far recorded</span>
+        <span class="c"># sequence. Note that both ``keysequence`` and</span>
+        <span class="c"># ``self.recorded_keysequence`` are ``QtmacsKeysequence``</span>
+        <span class="c"># instances.</span>
+        <span class="n">last_key</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">toQKeyEventList</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recorded_keysequence</span><span class="o">.</span><span class="n">appendQKeyEvent</span><span class="p">(</span><span class="n">last_key</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="RepeatMacro"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RepeatMacro">[docs]</a><span class="k">class</span> <span class="nc">RepeatMacro</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Repeat a macro a user-specified number of times.</span>
+
+<span class="sd">    The user can type in the number of repetitions and then either</span>
+<span class="sd">    invoke this macro again to explicitly finalise the input, or</span>
+<span class="sd">    simply type the keyboard combination for the macro to repeat. For</span>
+<span class="sd">    instance, if the macro was bound to &lt;ctrl&gt;+u then the key sequence</span>
+<span class="sd">    &#39;&lt;ctr&gt;+u 12 f&#39; will issue the macro associated with the &#39;f&#39; key</span>
+<span class="sd">    twelve times, ie. it will print the character &#39;f&#39; twelve times. To</span>
+<span class="sd">    repeat a number the input needs to finalised with another &lt;ctrl&gt;+u</span>
+<span class="sd">    command, eg. &#39;&lt;ctrl&gt;+u 5 &lt;ctrl&gt;+u 3&#39; will print the number &#39;3&#39;</span>
+<span class="sd">    five times.</span>
+
+<span class="sd">    .. note:: this does not work for macros that lack a key-binding.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Connect the &#39;keypressed&#39; signal from the event handler to</span>
+        <span class="c"># intercept the keys.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+
+        <span class="c"># Disable macro processing and only &quot;listen&quot; to the</span>
+        <span class="c"># keystrokes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteDisableMacroProcessing</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_complete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repeat_cnt</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
+
+    <span class="k">def</span> <span class="nf">qteRepeatTheMacro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="p">(</span><span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="c"># Disconnect the signal and reset the keyboard filter.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteEnableMacroProcessing</span><span class="p">()</span>
+
+        <span class="c"># Convert self.repeat_cnt to a number.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">num_repeat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repeat_cnt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">num_repeat</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># Queue up the specified number of macros, unless this macro</span>
+        <span class="c"># is us.</span>
+        <span class="k">if</span> <span class="n">macroName</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_repeat</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunMacro</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">)</span>
+
+        <span class="c"># Clear the flags.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_complete</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repeat_cnt</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+<div class="viewcode-block" id="RepeatMacro.qteKeyPress"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.RepeatMacro.qteKeyPress">[docs]</a>    <span class="k">def</span> <span class="nf">qteKeyPress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record the key presses reported by the key handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="p">(</span><span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">keysequence</span><span class="o">.</span><span class="n">toQKeyEventList</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c"># If the current key did not complete a macro ignore it.</span>
+        <span class="k">if</span> <span class="n">macroName</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_complete</span><span class="p">:</span>
+            <span class="c"># The user has terminated reading digits by calling this</span>
+            <span class="c"># macro directly, ie. the &#39;macroName ==</span>
+            <span class="c"># self.qteMacroName()&#39; branch below ran previously.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteRepeatTheMacro</span><span class="p">(</span><span class="n">msgObj</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">macroName</span> <span class="o">==</span> <span class="s">&#39;self-insert&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()):</span>
+            <span class="c"># User typed a digit.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">repeat_cnt</span> <span class="o">+=</span> <span class="n">key</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">macroName</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">():</span>
+            <span class="c"># User called us again. This completes reading the</span>
+            <span class="c"># digits. The next macro is executed self.prefix_num</span>
+            <span class="c"># times.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_complete</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># If we got until here we know that a macro is supposed to</span>
+            <span class="c"># be executed, that it is not the self-insert macro for a</span>
+            <span class="c"># digit, and that it was not another call to this macro to</span>
+            <span class="c"># complete the input explicitly.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteRepeatTheMacro</span><span class="p">(</span><span class="n">msgObj</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="MacroProxyDemo"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.MacroProxyDemo">[docs]</a><span class="k">class</span> <span class="nc">MacroProxyDemo</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Intercept all macros and execute them through this proxy.</span>
+
+<span class="sd">    The main purpose of this class is to demonstrate how macros can be</span>
+<span class="sd">    executed from another macro. To this end, this class disables the</span>
+<span class="sd">    macro execution in the event filter and connects to the</span>
+<span class="sd">    ``qtesigKeyparsed`` signal. Once a valid key sequence is</span>
+<span class="sd">    completed this class will execute it. The result is that</span>
+<span class="sd">    everything works as usual and that this macro is completely</span>
+<span class="sd">    transparent. To disable the proxy, simply call this macro again,</span>
+<span class="sd">    or press &lt;ctrl&gt;-g.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteActive</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteActive</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteActive</span> <span class="o">=</span> <span class="bp">True</span>
+
+            <span class="c"># Connect the &#39;keypressed&#39; signal from the event handler</span>
+            <span class="c"># to intercept the keys and the abort signal to turn off</span>
+            <span class="c"># this macro again.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">)</span>
+
+            <span class="c"># Prevent the event handler from executing any macros.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteDisableMacroProcessing</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MacroProxyDemo.qteKeyPress"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.MacroProxyDemo.qteKeyPress">[docs]</a>    <span class="k">def</span> <span class="nf">qteKeyPress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record the key presses.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="p">(</span><span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="c"># Return immediately if the key sequence does not specify a</span>
+        <span class="c"># macro (yet).</span>
+        <span class="k">if</span> <span class="n">macroName</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># If the macro to repeat is this very macro then disable the</span>
+        <span class="c"># macro proxy, otherwise execute the macro that would have run</span>
+        <span class="c"># originally.</span>
+        <span class="k">if</span> <span class="n">macroName</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Executing macro {} through {}&#39;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunMacro</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="n">srcObj</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="MacroProxyDemo.abort"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.MacroProxyDemo.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Disconnect all signals and turn macro processing in the event</span>
+<span class="sd">        handler back on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyparsed</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteKeyPress</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigAbort</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteActive</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteEnableMacroProcessing</span><span class="p">()</span>
+
+</div></div>
+<div class="viewcode-block" id="OtherApplet"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.OtherApplet">[docs]</a><span class="k">class</span> <span class="nc">OtherApplet</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move focus to next visible applet.</span>
+
+<span class="sd">    This macro can be used to cycle the focus through all currently</span>
+<span class="sd">    visible applets, including the mini applet (if one is active).</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nextApp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNextApplet</span><span class="p">(</span><span class="n">skipInvisible</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                             <span class="n">skipMiniApplet</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteMakeAppletActive</span><span class="p">(</span><span class="n">nextApp</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="KillWindow"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.KillWindow">[docs]</a><span class="k">class</span> <span class="nc">KillWindow</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete the active window.</span>
+
+<span class="sd">    Applets inside this window are not destroyed in the process.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillWindow</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="NewWindow"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.NewWindow">[docs]</a><span class="k">class</span> <span class="nc">NewWindow</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a new window.</span>
+
+<span class="sd">    The window is initially empty.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNewWindow</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="NextHiddenApplet"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.NextHiddenApplet">[docs]</a><span class="k">class</span> <span class="nc">NextHiddenApplet</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace the current applet with the next hidden one.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nextApp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNextApplet</span><span class="p">(</span>
+            <span class="n">numSkip</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">skipVisible</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">skipInvisible</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nextApp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteMakeAppletActive</span><span class="p">(</span><span class="n">nextApp</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SplitVertical"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.SplitVertical">[docs]</a><span class="k">class</span> <span class="nc">SplitVertical</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split the active applet vertically and show a hitherto invisible</span>
+<span class="sd">    applet.</span>
+
+<span class="sd">    If no further invisible applet exists then the function does</span>
+<span class="sd">    nothing, ie. the applet is not split in half.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteSplitApplet</span><span class="p">(</span><span class="n">splitHoriz</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SplitHorizontal"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.SplitHorizontal">[docs]</a><span class="k">class</span> <span class="nc">SplitHorizontal</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split the active applet horizontally and show a hitherto invisible</span>
+<span class="sd">    applet.</span>
+
+<span class="sd">    If no further invisible applet exists then the function does</span>
+<span class="sd">    nothing, ie. the applet is not split in half.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteSplitApplet</span><span class="p">(</span><span class="n">splitHoriz</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="DeleteOtherApplets"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.DeleteOtherApplets">[docs]</a><span class="k">class</span> <span class="nc">DeleteOtherApplets</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make all but the active applet invisible in the layout.</span>
+
+<span class="sd">    The applets are only removed from the layout, not killed. This</span>
+<span class="sd">    macro is typically used to undo all previously issued splitting</span>
+<span class="sd">    commands. If the layout only displays a single applet then nothing</span>
+<span class="sd">    happens.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Get currently active applet.</span>
+        <span class="n">curApp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNextApplet</span><span class="p">(</span><span class="n">numSkip</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c"># Remove all but the active applet from the layout.</span>
+        <span class="k">for</span> <span class="n">appName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAllAppletIDs</span><span class="p">():</span>
+            <span class="n">appObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAppletHandle</span><span class="p">(</span><span class="n">appName</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">appObj</span> <span class="ow">is</span> <span class="n">curApp</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRemoveAppletFromLayout</span><span class="p">(</span><span class="n">appObj</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="OtherWidget"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.OtherWidget">[docs]</a><span class="k">class</span> <span class="nc">OtherWidget</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Switch focus cyclically to next widget *inside* the active applet.</span>
+
+<span class="sd">    This macro is the widget equivalent of ``OtherApplet``.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">wid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteNextWidget</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">wid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteMakeWidgetActive</span><span class="p">(</span><span class="n">wid</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="KillApplet"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.KillApplet">[docs]</a><span class="k">class</span> <span class="nc">KillApplet</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Kill an applet.</span>
+
+<span class="sd">    If the ``readyToKill`` flag for the applet is **True** then the</span>
+<span class="sd">    applet is killed immediately. If not, then the user is presented</span>
+<span class="sd">    with the mini applet to answer</span>
+<span class="sd">    &#39;Yes&#39; or &#39;No&#39;.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="KillApplet.Query"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.KillApplet.Query">[docs]</a>    <span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">miniapplets</span><span class="o">.</span><span class="n">base_query</span><span class="o">.</span><span class="n">MiniAppletBaseQuery</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the name of one of the registered macros, eg. split-horizontal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">generateCompletions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s">&#39;Yes&#39;</span><span class="p">,</span> <span class="s">&#39;No&#39;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">inputCompleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">userInput</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;YES&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillApplet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteAppletID</span><span class="p">())</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="c"># History of macros issued through the mini applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteReadyToKill</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteKillApplet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteAppletID</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prefix_str</span> <span class="o">=</span> <span class="s">&#39;Applet does not want to be killed. Kill Anyway?&#39;</span><span class="p">,</span>
+            <span class="c"># Ask the user if the applet should really be deleted.</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span>
+                               <span class="n">prefix</span><span class="o">=</span><span class="n">prefix_str</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;Yes&#39;</span><span class="p">,</span> <span class="s">&#39;No&#39;</span><span class="p">))</span>
+
+            <span class="c"># Install the query object as the mini applet and return</span>
+            <span class="c"># control to the event loop.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteAddMiniApplet</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="CloseQtmacs"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.CloseQtmacs">[docs]</a><span class="k">class</span> <span class="nc">CloseQtmacs</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Close Qtmacs.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteCloseQtmacs</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="ExecuteMacro"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.ExecuteMacro">[docs]</a><span class="k">class</span> <span class="nc">ExecuteMacro</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use the mini applet to query for a macro name and then execute it.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ExecuteMacro.Query"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.ExecuteMacro.Query">[docs]</a>    <span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">miniapplets</span><span class="o">.</span><span class="n">base_query</span><span class="o">.</span><span class="n">MiniAppletBaseQuery</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the name of one of the registered macros, eg. split-horizontal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">generateCompletions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+            <span class="c"># Retrieve a list of all compatible macro names and return</span>
+            <span class="c"># a sorted version thereof.</span>
+            <span class="n">macro_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAllMacroNames</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">macro_list</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">inputCompleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunMacro</span><span class="p">(</span><span class="n">userInput</span><span class="p">,</span> <span class="n">widgetObj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span>
+                                     <span class="n">keysequence</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="c"># History of macros issued through the mini applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Instantiate the customised new mini applet query object to</span>
+        <span class="c"># ask the user for the next macro to execute.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span>
+                           <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;Execute Macro:&#39;</span><span class="p">,</span>
+                           <span class="n">history</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span><span class="p">)</span>
+
+        <span class="c"># Install the query object as the mini applet and return</span>
+        <span class="c"># control to the event loop.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteAddMiniApplet</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="NewApplet"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.NewApplet">[docs]</a><span class="k">class</span> <span class="nc">NewApplet</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use the mini applet to query for an applet name and then</span>
+<span class="sd">    instantiate it.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="NewApplet.Query"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.NewApplet.Query">[docs]</a>    <span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">miniapplets</span><span class="o">.</span><span class="n">base_query</span><span class="o">.</span><span class="n">MiniAppletBaseQuery</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the name of one of the registered applet types,</span>
+<span class="sd">        eg. DemoThread.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">generateCompletions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteGetAllAppletNames</span><span class="p">())</span>
+
+        <span class="k">def</span> <span class="nf">inputCompleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+            <span class="c"># Create a new instance of the applet requested by the user.</span>
+            <span class="n">newApplet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNewApplet</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">newApplet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteMakeAppletActive</span><span class="p">(</span><span class="n">newApplet</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Cannot create new applet because the ID &lt;b&gt;{}&lt;/b&gt;&#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; is already taken.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userInput</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="c"># History of applets created through the mini applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Instantiate the customised new mini applet query object to</span>
+        <span class="c"># ask the user for the name of the applet to create.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span>
+                           <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;Create Applet:&#39;</span><span class="p">,</span>
+                           <span class="n">history</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span><span class="p">)</span>
+
+        <span class="c"># Install the query object as the mini applet and return</span>
+        <span class="c"># control to the event loop.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteAddMiniApplet</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="FindFile"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.FindFile">[docs]</a><span class="k">class</span> <span class="nc">FindFile</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use the mini applet to query a file name.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="FindFile.Query"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain_macros.FindFile.Query">[docs]</a>    <span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">miniapplets</span><span class="o">.</span><span class="n">file_query</span><span class="o">.</span><span class="n">MiniAppletFindFile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the name of a file (always starts in the current directory).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">generateCompletions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completions</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">completions</span>
+
+        <span class="k">def</span> <span class="nf">inputCompleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+            <span class="c"># Look if one of the known file patterns matches with the</span>
+            <span class="c"># current user input to determine which applet to open.</span>
+            <span class="c"># If none matches, then open the file with the default</span>
+            <span class="c"># applet.</span>
+            <span class="n">appName</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">findFile_types</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="n">userInput</span><span class="p">):</span>
+                    <span class="n">appName</span> <span class="o">=</span> <span class="n">name</span>
+                    <span class="k">break</span>
+
+            <span class="c"># If none of the currently registered applets can process</span>
+            <span class="c"># the file then use the fallback option (usually a simple</span>
+            <span class="c"># text editor widget).</span>
+            <span class="k">if</span> <span class="n">appName</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">appName</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">findFile_default</span>
+
+            <span class="c"># Try to instantiate the new applet.</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteNewApplet</span><span class="p">(</span><span class="n">appName</span><span class="p">,</span> <span class="n">userInput</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteMakeAppletActive</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+
+        <span class="c"># History of applets created through the mini applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Instantiate the file name query.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span>
+                           <span class="n">history</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qteQueryHistory</span><span class="p">)</span>
+
+        <span class="c"># Install the query object as the mini applet and return</span>
+        <span class="c"># control to the event loop.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteAddMiniApplet</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+
+<span class="c"># -----------------------------------------------------------------</span>
+<span class="c">#   Assign the default key bindings for the Qtmacs standard macros.</span>
+<span class="c"># -----------------------------------------------------------------</span></div>
+<span class="k">def</span> <span class="nf">install_macros_and_bindings</span><span class="p">():</span>
+    <span class="n">qteMain</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">qteMain</span>
+
+    <span class="c"># For readability purposes, compile a list where each entry</span>
+    <span class="c"># contains the macro name, macro class, and key binding associated</span>
+    <span class="c"># with this macro.</span>
+    <span class="n">macro_list</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">DescribeKey</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+h k&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">CloseQtmacs</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x &lt;ctrl&gt;+c&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">KillApplet</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x k&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ReplayKeysequence</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x e&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">RecordKeysequenceCore</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">RecordKeysequenceStart</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x (&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">RecordKeysequenceStop</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x )&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">OtherApplet</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x o&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">NextHiddenApplet</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x &lt;ctrl&gt;+n&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">OtherWidget</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x &lt;ctrl&gt;+o&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">RepeatMacro</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+u&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">DeleteOtherApplets</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x 1&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">SplitHorizontal</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x 2&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">SplitVertical</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x 3&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ExecuteMacro</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+x&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">NewApplet</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x &lt;ctrl&gt;+a&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">FindFile</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+x &lt;ctrl&gt;+f&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">KillWindow</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">NewWindow</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">MacroProxyDemo</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+
+    <span class="c"># Iterate over the list of all macros.</span>
+    <span class="k">for</span> <span class="n">macroCls</span><span class="p">,</span> <span class="n">keysequence</span> <span class="ow">in</span> <span class="n">macro_list</span><span class="p">:</span>
+        <span class="c"># Get the macro name.</span>
+        <span class="n">macroName</span> <span class="o">=</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteMacroNameMangling</span><span class="p">(</span><span class="n">macroCls</span><span class="p">)</span>
+
+        <span class="c"># Register the macro if it has not been registered already.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteIsMacroRegistered</span><span class="p">(</span><span class="n">macroName</span><span class="p">):</span>
+            <span class="n">macroName</span> <span class="o">=</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">macroCls</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span>
+
+        <span class="c"># Assign a shortcut if one was provided.</span>
+        <span class="k">if</span> <span class="n">keysequence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyGlobal</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

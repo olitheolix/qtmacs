@@ -1,0 +1,481 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.undo_stack &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.undo_stack</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">An Undo framework to replace the Qt native implementation in applets.</span>
+
+<span class="sd">The main difference to Qt&#39;s one is that an undo operations does not</span>
+<span class="sd">remove elements from the stack but rather adds the inverse operation</span>
+<span class="sd">to the stack (like in GIT). This facilitates an Emacs like undo</span>
+<span class="sd">behaviour where undone operations can themselves be undone again,</span>
+<span class="sd">which makes a dedicated `redo` option superfluous.</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from undo_stack import *</span>
+
+<span class="sd">Here is a (pseudo) example where a macro (called ``FooMacro``)</span>
+<span class="sd">uses the ``UndoFoo`` command to implement the actual `foo` action::</span>
+
+<span class="sd">    class UndoFoo(QtmacsUndoCommand):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Demonstrate how to implement a reversible `foo` command</span>
+<span class="sd">        with the help of ``QtmacsUndoCommand`` class.</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+
+<span class="sd">        def __init__(self, arg1, arg2):</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            To execute the ``foo`` operation this object (and thus this</span>
+<span class="sd">            constructor) will almost certainly want to know the widget,</span>
+<span class="sd">            among other information, eg. the character to insert if this</span>
+<span class="sd">            is an undo object for the self-insert widget.</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+
+<span class="sd">            # -- your code goes here --</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        def reverseCommit(self):</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            Implement the ``foo`` action and make sure to store all</span>
+<span class="sd">            information necessary to *exactly* reverse the operation.</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+
+<span class="sd">            # -- your code goes here --</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        def commit(self):</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            Implement the steps that *exactly* reverse the ``foo`` operation</span>
+<span class="sd">            implemented in ``reverseCommit``.</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+
+<span class="sd">            # -- your code goes here --</span>
+<span class="sd">            pass</span>
+
+<span class="sd">    class FooMacro(QtmacsMacro):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Apply foo with the help of an ``QtmacsUndoCommand`` object.</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+
+<span class="sd">        def __init__(self):</span>
+<span class="sd">            super().__init__()</span>
+<span class="sd">            self.qteSetAppletSignature(&#39;*&#39;)</span>
+<span class="sd">            self.qteSetWidgetSignature((&#39;QTextEdit&#39;, &#39;QtmacsTextEdit&#39;))</span>
+
+<span class="sd">        def qteRun(self):</span>
+<span class="sd">            # Instantiate an undo-object that can implement (and reverse)</span>
+<span class="sd">            # the foo operation.</span>
+<span class="sd">            undoObj = UndoFoo(self, self.qteWidget, arg2, arg3, ...)</span>
+
+<span class="sd">            # Push this undo object onto the stack (this will automatically</span>
+<span class="sd">            # trigger the ``commit`` method of that object).</span>
+<span class="sd">            self.qteUndoStack.push(undoObj)</span>
+
+<span class="sd">Once the ``undoObj`` was added to the stack via ``qteUndoStack`` the</span>
+<span class="sd">``undo`` method of the widget takes care of everything else related to</span>
+<span class="sd">doing and undoing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">qtmacs.auxiliary</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+<span class="n">QtmacsMessage</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsMessage</span>
+
+
+<div class="viewcode-block" id="QtmacsUndoCommand"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoCommand">[docs]</a><span class="k">class</span> <span class="nc">QtmacsUndoCommand</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container to specify a command and how to undo it.</span>
+
+<span class="sd">    If ``undoObj`` is a ``QtmacsUndoCommand`` itself then return</span>
+<span class="sd">    a copy of it.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``undoObj`` (**QtmacsUndoCommand**): object to copy.</span>
+
+<span class="sd">    |Raises|</span>
+
+<span class="sd">    * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">undoObj</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c"># Check type of input arguments.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">undoObj</span><span class="p">,</span> <span class="n">QtmacsUndoCommand</span><span class="p">)</span> <span class="ow">and</span> <span class="n">undoObj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QtmacsArgumentError</span><span class="p">(</span><span class="s">&#39;undoObj&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsUndoCommand&#39;</span><span class="p">,</span>
+                                      <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">undoObj</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nextIsRedo</span> <span class="o">=</span> <span class="n">undoObj</span><span class="o">.</span><span class="n">nextIsRedo</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span> <span class="o">=</span> <span class="n">undoObj</span><span class="o">.</span><span class="n">commit</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reverseCommit</span> <span class="o">=</span> <span class="n">undoObj</span><span class="o">.</span><span class="n">reverseCommit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nextIsRedo</span> <span class="o">=</span> <span class="bp">True</span>
+
+<div class="viewcode-block" id="QtmacsUndoCommand.commit"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoCommand.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implement the desired action.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="QtmacsUndoCommand.reverseCommit"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoCommand.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implement the inverse of the action from ``commit``.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+</div></div>
+<div class="viewcode-block" id="QtmacsUndoStack"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack">[docs]</a><span class="k">class</span> <span class="nc">QtmacsUndoStack</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement an Undo stack.</span>
+
+<span class="sd">    The class provides two methods: ``push`` and ``undo``. The first</span>
+<span class="sd">    takes a ``QtmacsUndoCommand`` object, adds it to the stack, and</span>
+<span class="sd">    runs its ``commit`` method. The second method does not take any</span>
+<span class="sd">    arguments and will push the corresponding inverse action</span>
+<span class="sd">    (ie. ``reverseCommit`` method) onto the stack.</span>
+
+<span class="sd">    ..note: the class keeps track of consecutive ``undo`` calls and</span>
+<span class="sd">            will to push the correct undo action onto the stack.</span>
+
+<span class="sd">    The class also features the ``qtesigSavedState`` signal which</span>
+<span class="sd">    is triggered whenever the undo actions lead back to the last</span>
+<span class="sd">    saved state, at least theoretically (see the documentation of</span>
+<span class="sd">    the ``undo`` method for further details).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">qtesigSavedState</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span><span class="p">(</span><span class="n">QtmacsMessage</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Call super class constructor.</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="c"># The stack is a simple list.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Point to last undo action, or ``None`` if the last action</span>
+        <span class="c"># was not one.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wasUndo</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Index of last undo element where the modified state of</span>
+        <span class="c"># the document was set to &quot;unmodified&quot; (see ``setModified`` method).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteLastSavedUndoIndex</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">undoObj</span><span class="p">:</span> <span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The actual method that adds the command object onto the stack.</span>
+
+<span class="sd">        This method also toggles the ``nextIsRedo`` flag in the</span>
+<span class="sd">        command object and, depending on its value, executes either</span>
+<span class="sd">        the ``commit`` or ``reverseCommit`` method of the object. This</span>
+<span class="sd">        distinction is invisible to the user but if the method is</span>
+<span class="sd">        passed a copy of an older ``undoObj`` already on the stack</span>
+<span class="sd">        (typically the case when called from ``undo``) then it will</span>
+<span class="sd">        call the inverse command (ie a ``commit`` when the previous</span>
+<span class="sd">        call was a ``reverseCommit`` and vice versa). In this manner,</span>
+<span class="sd">        the undo history will contain just another command object</span>
+<span class="sd">        which happens to undo a previous one, irrespective of whether</span>
+<span class="sd">        the previous one was already the undoing of an even earlier</span>
+<span class="sd">        one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">undoObj</span><span class="o">.</span><span class="n">nextIsRedo</span><span class="p">:</span>
+            <span class="n">undoObj</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">undoObj</span><span class="o">.</span><span class="n">reverseCommit</span><span class="p">()</span>
+        <span class="n">undoObj</span><span class="o">.</span><span class="n">nextIsRedo</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">undoObj</span><span class="o">.</span><span class="n">nextIsRedo</span>
+
+<div class="viewcode-block" id="QtmacsUndoStack.push"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack.push">[docs]</a>    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">undoObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add ``undoObj`` command to stack and run its ``commit`` method.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``undoObj`` (**QtmacsUndoCommand**): the new command object.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Check type of input arguments.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">undoObj</span><span class="p">,</span> <span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">QtmacsArgumentError</span><span class="p">(</span><span class="s">&#39;undoObj&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsUndoCommand&#39;</span><span class="p">,</span>
+                                      <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="c"># Flag that the last action was not an undo action and push</span>
+        <span class="c"># the command to the stack.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wasUndo</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsUndoStack.pop"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pop the last undo command from the stack.</span>
+
+<span class="sd">        Unlike the ``undo`` method, ``pop` does not undo any changes, (ie.</span>
+<span class="sd">        call methods in the ``QtmacsUndoCommand`` object) and literally</span>
+<span class="sd">        removes the ``QtmacsUndoCommand`` from the stack. The consequence</span>
+<span class="sd">        is that the so removed ``QtmacsUndoCommand`` cannot be undone again.</span>
+
+<span class="sd">        There should be hardly a need to call this method except in special</span>
+<span class="sd">        cases. One such case is the ``yank-pop`` macro which replaces the</span>
+<span class="sd">        last yanked text with another one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsUndoStack.reset"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove all undo objects - permanently.</span>
+
+<span class="sd">        This operation cannot be undone.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">=</span> <span class="mi">0</span>
+</div>
+<div class="viewcode-block" id="QtmacsUndoStack.undo"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack.undo">[docs]</a>    <span class="k">def</span> <span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undo the last command by adding its inverse action to the stack.</span>
+
+<span class="sd">        This method automatically takes care of applying the correct</span>
+<span class="sd">        inverse action when it is called consecutively (ie. without a</span>
+<span class="sd">        calling ``push`` in between).</span>
+
+<span class="sd">        The ``qtesigSavedState`` signal is triggered whenever enough undo</span>
+<span class="sd">        operations have been performed to put the document back into the</span>
+<span class="sd">        last saved state.</span>
+
+<span class="sd">        ..warning: The ``qtesigSaveState`` is triggered whenever the</span>
+<span class="sd">          logic of the undo operations **should** have led back to</span>
+<span class="sd">          that state, but since the ``UndoStack`` only stacks and</span>
+<span class="sd">          ``QtmacsUndoCommand`` objects it may well be the document is</span>
+<span class="sd">          **not** in the last saved state, eg. because not all</span>
+<span class="sd">          modifications were protected by undo objects, or because the</span>
+<span class="sd">          ``QtmacsUndoCommand`` objects have a bug. It is therefore</span>
+<span class="sd">          advisable to check in the calling class if the content is</span>
+<span class="sd">          indeed identical by comparing it with a temporarily stored</span>
+<span class="sd">          copy.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Signals|</span>
+
+<span class="sd">        * ``qtesigSavedState``: the document is the last saved state.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># If it is the first call to this method after a ``push`` then</span>
+        <span class="c"># reset ``qteIndex`` to the last element, otherwise just</span>
+        <span class="c"># decrease it.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wasUndo</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="c"># Flag that the last action was an `undo` operation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wasUndo</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Make a copy of the command and push it to the stack.</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="n">QtmacsUndoCommand</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+
+        <span class="c"># If the just pushed undo object restored the last saved state</span>
+        <span class="c"># then trigger the ``qtesigSavedState`` signal and set the</span>
+        <span class="c"># _qteLastSaveUndoIndex variable again. This is necessary</span>
+        <span class="c"># because an undo command will not *remove* any elements from</span>
+        <span class="c"># the undo stack but *add* the inverse operation to the</span>
+        <span class="c"># stack. Therefore, when enough undo operations have been</span>
+        <span class="c"># performed to reach the last saved state that means that the</span>
+        <span class="c"># last addition to the stack is now implicitly the new last</span>
+        <span class="c"># save point.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteIndex</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteLastSavedUndoIndex</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qtesigSavedState</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">QtmacsMessage</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">saveState</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsUndoStack.saveState"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.undo_stack.QtmacsUndoStack.saveState">[docs]</a>    <span class="k">def</span> <span class="nf">saveState</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Treat the current state as the last unmodified one.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteLastSavedUndoIndex</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteStack</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

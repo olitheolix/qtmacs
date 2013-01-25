@@ -1,0 +1,278 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.logging_handler &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.logging_handler</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Define a custom logging handler class for the logger module.</span>
+
+<span class="sd">This handler is subclassed from ``logging.Handler``, stores all</span>
+<span class="sd">log-records that have every occurred, and triggers the signal supplied</span>
+<span class="sd">to the constructor whenever a new record is available.</span>
+
+<span class="sd">The constructor of ``QtmacsMain`` will instantiate this</span>
+<span class="sd">object. Subsequently, all its methods, as well as all macros and</span>
+<span class="sd">applets, can log messages with::</span>
+
+<span class="sd">    self.qteLogger.debug(&#39;This is a debug message.&#39;)</span>
+<span class="sd">    self.qteLogger.info(&#39;This is an info message.&#39;)</span>
+<span class="sd">    self.qteLogger.warn(&#39;This is a warning message.&#39;)</span>
+<span class="sd">    self.qteLogger.error(&#39;This is an error message.&#39;)</span>
+<span class="sd">    self.qteLogger.exception(&#39;Only use inside Except block.&#39;,</span>
+<span class="sd">                              exc_info-True, stack_info-True)</span>
+
+<span class="sd">The class will not re-trigger ``sigNewLog`` until its ``fetch`` method</span>
+<span class="sd">was called, which will return all the log request accumulated since</span>
+<span class="sd">the last call. This can greatly reduce the system load if</span>
+<span class="sd">``sigNewLog`` is connected asynchronously via::</span>
+
+<span class="sd">    sigLogReady.connect(receiver_slot, type=QtCore.Qt.QueuedConnection)</span>
+
+<span class="sd">In this case the signal will not be emitted until control returns to</span>
+<span class="sd">the Qt event loop the macro and focus manager were fully executed.</span>
+<span class="sd">The ``receiver_slot`` from the above example will therefore only be</span>
+<span class="sd">called once and can batch process the queued up messages, instead</span>
+<span class="sd">doing it separately for log record that arrives. The performance</span>
+<span class="sd">improvement of this implementation is non-negligible.</span>
+
+<span class="sd">It is safe to create multiple instances of this handler and use::</span>
+
+<span class="sd">    from logging_handler import something</span>
+
+<span class="sd">Use example (see also documentation of ``logging`` module)::</span>
+
+<span class="sd">    # Define a new signal and create a new handler for logging messages.</span>
+<span class="sd">    self.sigLogReady = QtCore.pysqtSignal()</span>
+<span class="sd">    log_handler = QtmacsLoggingHandler(self.sigLogReady)</span>
+<span class="sd">    log_handler.setLevel(logging.DEBUG)</span>
+
+<span class="sd">    # Connect the newly create signal to the method that should receive</span>
+<span class="sd">    # logging requests.</span>
+<span class="sd">    sigLogReady.connect(self.qteUpdateLogSlot, type=QtCore.Qt.QueuedConnection)</span>
+
+<span class="sd">    # Attach the handler to the Qtmacs wide logger ``self.qteLogger``</span>
+<span class="sd">    # (every macro and applet has this variable defined)</span>
+<span class="sd">    self.qteLogger.addHandler(self.log_handler)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+
+<div class="viewcode-block" id="QtmacsLoggingHandler"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.logging_handler.QtmacsLoggingHandler">[docs]</a><span class="k">class</span> <span class="nc">QtmacsLoggingHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Handler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A new handler for the logger module that uses Qt signals to signal</span>
+<span class="sd">    new log messages.</span>
+
+<span class="sd">    The class stores all log records internally and provides a fetch()</span>
+<span class="sd">    method to distribute them to whomever asks. The arrival of new log</span>
+<span class="sd">    messages is indicated with a Qt signal. Ideally, this signal</span>
+<span class="sd">    should be connected as a ``QueuedConnection`` as the class is</span>
+<span class="sd">    smart enough to trigger it only once until data is fetched. This</span>
+<span class="sd">    keeps the event loop as congestion free as possible and allows for</span>
+<span class="sd">    batch processing of the log messages, instead of on a one-by-one</span>
+<span class="sd">    basis.</span>
+
+<span class="sd">    The class also keeps a record of all log messages it has every</span>
+<span class="sd">    issued and are not deleted when ``fetch`` is called.</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``sigNewLog`` (**pyqtSignal**): the signal to trigger when a new</span>
+<span class="sd">      log record arrives.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigNewLog</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigNewLog</span> <span class="o">=</span> <span class="n">sigNewLog</span>
+
+        <span class="c"># Buffer for all logger records.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Flag to indicate whether a fetch signal was already</span>
+        <span class="c"># triggered. If True, then the fetch signal was delivered but</span>
+        <span class="c"># no one has yet called the fetch() method. If false, then no</span>
+        <span class="c"># new log messages have arrived since someone last called the</span>
+        <span class="c"># fetch() method.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waitForFetch</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="QtmacsLoggingHandler.emit"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.logging_handler.QtmacsLoggingHandler.emit">[docs]</a>    <span class="k">def</span> <span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overloaded emit() function from the logger module.</span>
+
+<span class="sd">        The supplied log record is added to the log buffer and the</span>
+<span class="sd">        sigNewLog signal triggered.</span>
+
+<span class="sd">        .. note:: this method is always only called from the</span>
+<span class="sd">          ``logger`` module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+        <span class="c"># Do not trigger the signal again if no one has fetched any</span>
+        <span class="c"># data since it was last set.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitForFetch</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">waitForFetch</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigNewLog</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="QtmacsLoggingHandler.fetch"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.logging_handler.QtmacsLoggingHandler.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch log records and return them as a list.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``start`` (**int**): non-negative index of the first log</span>
+<span class="sd">          record to return.</span>
+<span class="sd">        * ``stop`` (**int**):  non-negative index of the last log</span>
+<span class="sd">          record to return.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **list**: list of log records (see ``logger`` module for</span>
+<span class="sd">          definition of log record).</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Set defaults if no explicit indices were provided.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">start</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
+
+        <span class="c"># Sanity check: indices must be valid.</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">stop</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">):</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
+
+        <span class="c"># Clear the fetch flag. It will be set again in the emit()</span>
+        <span class="c"># method once new data arrives.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waitForFetch</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Return the specified range of log records.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

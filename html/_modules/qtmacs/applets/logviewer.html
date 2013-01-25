@@ -1,0 +1,383 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.applets.logviewer &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.applets.logviewer</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Format and display log-messages.</span>
+
+<span class="sd">This applet creates an instance of ``QtmacsLoggingHandler`` which, in</span>
+<span class="sd">turn, is linked into the Qtmacs wide logging mechanism (which is taken</span>
+<span class="sd">from the ``logger`` module in the standard Python library).</span>
+
+<span class="sd">It displays all received log messages and applies basic formatting to</span>
+<span class="sd">distinguish between debug/status messages (black), warnings (blue),</span>
+<span class="sd">and errors (red). If a stack trace is available it prints a formatted</span>
+<span class="sd">version of it that resembles the stack trace usually seen by the</span>
+<span class="sd">Python interpreter itself.</span>
+
+<span class="sd">This applet is based on ``QTextEdit`` and thus capable of interpreting</span>
+<span class="sd">HTML tags. For instance, calling::</span>
+
+<span class="sd">    qteMain.qteLogger.info(&#39;This is a &lt;b&gt;bold&lt;/b&gt; statement&#39;)</span>
+
+<span class="sd">will result in the message \&quot;This is a **bold** statement\&quot;.</span>
+
+<span class="sd">.. note: This is (one of the few) modules that Qtmacs automatically</span>
+<span class="sd">   registers and instantiates at startup.</span>
+
+<span class="sd">As with every applet, do **not** use::</span>
+
+<span class="sd">    from qtmacs.applets.logviewer import LogViewer</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">qtmacs.base_applet</span>
+<span class="kn">import</span> <span class="nn">qtmacs.logging_handler</span>
+<span class="kn">import</span> <span class="nn">qtmacs.extensions.qtmacstextedit_widget</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+
+<span class="c"># Shorthands:</span>
+<span class="n">QtmacsTextEdit</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">qtmacstextedit_widget</span><span class="o">.</span><span class="n">QtmacsTextEdit</span>
+
+
+<div class="viewcode-block" id="LogViewer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.applets.logviewer.LogViewer">[docs]</a><span class="k">class</span> <span class="nc">LogViewer</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">base_applet</span><span class="o">.</span><span class="n">QtmacsApplet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Display log messages.</span>
+
+<span class="sd">    The class instantiates its own handler to connect to the Qtmacs</span>
+<span class="sd">    logger (from the logger module).</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``appletID`` (**str**): unique ID used by ``QtmacsMain`` to</span>
+<span class="sd">      distinguish applets.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sigLogReady</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appletID</span><span class="p">):</span>
+        <span class="c"># Initialise the base class.</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">appletID</span><span class="p">)</span>
+
+        <span class="c"># Add the QTextEdit widget that will display the log messages.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteAddWidget</span><span class="p">(</span><span class="n">QtmacsTextEdit</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="c"># Binary flag used by the log parser to indicate that it is</span>
+        <span class="c"># probably a good idea to switch to the message window</span>
+        <span class="c"># immediately, eg. because an error was logged.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteAutoActivate</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Specify the applet type. This information determines which</span>
+        <span class="c"># macros are compatible.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">)</span>
+
+        <span class="c"># Make sure the cursor is at the end of the buffer. This will</span>
+        <span class="c"># ensure that subsequently added log entries remain visible, ie.</span>
+        <span class="c"># the QTextEdit will auto-scroll with the text.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMoveToEndOfBuffer</span><span class="p">()</span>
+
+        <span class="c"># Define the colors for the different message types.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteColorCode</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;DEBUG&#39;</span><span class="p">:</span> <span class="s">&#39;Green&#39;</span><span class="p">,</span> <span class="s">&#39;INFO&#39;</span><span class="p">:</span> <span class="s">&#39;Black&#39;</span><span class="p">,</span>
+                             <span class="s">&#39;WARNING&#39;</span><span class="p">:</span> <span class="s">&#39;Blue&#39;</span><span class="p">,</span> <span class="s">&#39;ERROR&#39;</span><span class="p">:</span> <span class="s">&#39;Red&#39;</span><span class="p">,</span>
+                             <span class="s">&#39;CRITICAL&#39;</span><span class="p">:</span> <span class="s">&#39;Purple&#39;</span><span class="p">}</span>
+
+        <span class="c"># Count the number of processed log records.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteLogCnt</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># Format the output messages as &quot;{INFO, WARNING,...} - message&quot;.</span>
+        <span class="n">log_format</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%(levelname)s</span><span class="s"> - </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">)</span>
+
+        <span class="c"># Instantiate a custom logging handler that uses Qt signals.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logHandler</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">logging_handler</span><span class="o">.</span><span class="n">QtmacsLoggingHandler</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigLogReady</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logHandler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">log_format</span><span class="p">)</span>
+
+        <span class="c"># The sigLogReady signal triggers whenever a new log message</span>
+        <span class="c"># arrives. It is better to use a QueuedConnection for this</span>
+        <span class="c"># signal because then it is not processed until the event loop</span>
+        <span class="c"># regains control. This has the advantage that not every log</span>
+        <span class="c"># message is immediately processed, but log messages can</span>
+        <span class="c"># accumulate and are only fetched and displayed once the event</span>
+        <span class="c"># loop is idle again.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigLogReady</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteUpdateLogSlot</span><span class="p">,</span>
+                                 <span class="nb">type</span><span class="o">=</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">QueuedConnection</span><span class="p">)</span>
+
+        <span class="c"># Register the handler with the logger module.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logHandler</span><span class="p">)</span>
+
+        <span class="c"># Register shutdown handler.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigCloseQtmacs</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteToBeKilled</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteFormatMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logRecord</span><span class="p">,</span> <span class="n">numRepeat</span><span class="p">):</span>
+        <span class="c"># Shorthand.</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">logRecord</span><span class="o">.</span><span class="n">msg</span>
+
+        <span class="c"># Bring up the log viewer automatically for any of the</span>
+        <span class="c"># following log levels.</span>
+        <span class="k">if</span> <span class="n">logRecord</span><span class="o">.</span><span class="n">levelname</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;ERROR&#39;</span><span class="p">,</span> <span class="s">&#39;CRITICAL&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteAutoActivate</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">if</span> <span class="n">logRecord</span><span class="o">.</span><span class="n">exc_info</span><span class="p">:</span>
+            <span class="c"># If an error trace exists format it with the help of the</span>
+            <span class="c"># traceback module. The result is a list of strings which</span>
+            <span class="c"># end in a new line character.</span>
+            <span class="n">tb_format</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="o">*</span><span class="n">logRecord</span><span class="o">.</span><span class="n">exc_info</span><span class="p">)</span>
+
+            <span class="c"># Join the list into a string and pre-pend some</span>
+            <span class="c"># whitespaces to improve the readability in the message</span>
+            <span class="c"># applet. Escape the &#39;&lt;&#39; symbol with &#39;&amp;lt;&#39;.</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tb_format</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;  &#39;</span> <span class="o">+</span> <span class="n">_</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span>
+
+            <span class="c"># Strip trailing white spaces and add the PRE tag to</span>
+            <span class="c"># ensure that the text is displayed verbatim because the</span>
+            <span class="c"># text edit widget interprets HTML.</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">tb_format</span> <span class="o">=</span> <span class="s">&#39;&lt;HR&gt;&lt;PRE&gt;&#39;</span> <span class="o">+</span> <span class="n">out</span> <span class="o">+</span> <span class="s">&#39;&lt;/PRE&gt;&lt;HR&gt;&lt;br /&gt;&#39;</span>
+            <span class="k">del</span> <span class="n">out</span>
+        <span class="k">elif</span> <span class="n">logRecord</span><span class="o">.</span><span class="n">stack_info</span><span class="p">:</span>
+            <span class="c"># No error trace but a stack trace was provided. The stack</span>
+            <span class="c"># trace is directly available as a string and there is no</span>
+            <span class="c"># need for an extra formatting function from the traceback</span>
+            <span class="c"># module. The string is split into lines to prefix them</span>
+            <span class="c"># with some white space characters for better readability</span>
+            <span class="c"># in the log.</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="n">logRecord</span><span class="o">.</span><span class="n">stack_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+            <span class="c"># Join the list into a string and pre-pend a some white</span>
+            <span class="c"># spaces to improve the readability in the message</span>
+            <span class="c"># applet. Escape the &#39;&lt;&#39; symbol with &#39;&amp;lt;&#39;. Also add the</span>
+            <span class="c"># newline character removed by the split method above.</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">stack</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="s">&#39;  &#39;</span> <span class="o">+</span> <span class="n">_</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+            <span class="c"># Strip trailing white spaces and add the PRE tag to</span>
+            <span class="c"># ensure that the text is displayed verbatim because the</span>
+            <span class="c"># text edit widget interprets HTML.</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">tb_format</span> <span class="o">=</span> <span class="s">&#39;&lt;HR&gt;&lt;PRE&gt;&#39;</span> <span class="o">+</span> <span class="n">out</span> <span class="o">+</span> <span class="s">&#39;&lt;/PRE&gt;&lt;HR&gt;&lt;br /&gt;&#39;</span>
+            <span class="k">del</span> <span class="n">out</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tb_format</span> <span class="o">=</span> <span class="s">&#39;&lt;br /&gt;&#39;</span>
+
+        <span class="c"># Add a line that specifies the number of repetitions.</span>
+        <span class="k">if</span> <span class="n">numRepeat</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rep_msg</span> <span class="o">=</span> <span class="s">&#39; -- (Repeated {} times)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">numRepeat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rep_msg</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+        <span class="c"># Pick the appropriate color for the message type.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteColorCode</span><span class="p">[</span><span class="n">logRecord</span><span class="o">.</span><span class="n">levelname</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="s">&#39;Black&#39;</span>
+
+        <span class="c"># Return the HTML formatted message.</span>
+        <span class="k">return</span> <span class="s">&#39;&lt;font color=&quot;{}&quot;&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="o">+</span> <span class="n">msg</span> <span class="o">+</span> <span class="n">rep_msg</span> <span class="o">+</span> <span class="n">tb_format</span>
+
+<div class="viewcode-block" id="LogViewer.qteUpdateLogSlot"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.applets.logviewer.LogViewer.qteUpdateLogSlot">[docs]</a>    <span class="k">def</span> <span class="nf">qteUpdateLogSlot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch and display the next batch of log messages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Fetch all log records that have arrived since the last</span>
+        <span class="c"># fetch() call and update the record counter.</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logHandler</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qteLogCnt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteLogCnt</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+
+        <span class="c"># Return immediately if no log message is available (this case</span>
+        <span class="c"># should be impossible).</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">log</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c"># Remove all duplicate entries and count their repetitions.</span>
+        <span class="n">log_pruned</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">last_entry</span> <span class="o">=</span> <span class="n">log</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">num_rep</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">cur_entry</span> <span class="ow">in</span> <span class="n">log</span><span class="p">:</span>
+            <span class="c"># If the previous log message is identical to the current</span>
+            <span class="c"># one increase its repetition counter. If the two log</span>
+            <span class="c"># messages differ, add the last message to the output log</span>
+            <span class="c"># and reset the repetition counter.</span>
+            <span class="k">if</span> <span class="n">last_entry</span><span class="o">.</span><span class="n">msg</span> <span class="o">==</span> <span class="n">cur_entry</span><span class="o">.</span><span class="n">msg</span><span class="p">:</span>
+                <span class="n">num_rep</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log_pruned</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">last_entry</span><span class="p">,</span> <span class="n">num_rep</span><span class="p">])</span>
+                <span class="n">num_rep</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">last_entry</span> <span class="o">=</span> <span class="n">cur_entry</span>
+
+        <span class="c"># The very last entry must be added by hand.</span>
+        <span class="n">log_pruned</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">cur_entry</span><span class="p">,</span> <span class="n">num_rep</span><span class="p">])</span>
+
+        <span class="c"># Format the log entries (eg. color coding etc.)</span>
+        <span class="n">log_formatted</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">cur_entry</span> <span class="ow">in</span> <span class="n">log_pruned</span><span class="p">:</span>
+            <span class="n">log_formatted</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteFormatMessage</span><span class="p">(</span><span class="n">cur_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cur_entry</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">log_formatted</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+        <span class="c"># Insert the formatted text all at once as calls to insertHtml</span>
+        <span class="c"># are expensive.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="n">log_formatted</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMoveToEndOfBuffer</span><span class="p">()</span>
+
+        <span class="c"># If the log contained an error (or something else of interest</span>
+        <span class="c"># to the user) then switch to the messages buffer (ie. switch</span>
+        <span class="c"># to this very applet).</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteAutoActivate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteAutoActivate</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteMakeAppletActive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="LogViewer.qteMoveToEndOfBuffer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.applets.logviewer.LogViewer.qteMoveToEndOfBuffer">[docs]</a>    <span class="k">def</span> <span class="nf">qteMoveToEndOfBuffer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move cursor to the end of the buffer to facilitate auto</span>
+<span class="sd">        scrolling.</span>
+
+<span class="sd">        Technically, this is exactly the &#39;endOfBuffer&#39; macro but to</span>
+<span class="sd">        avoid swamping Qtmacs with &#39;qteRunMacroStarted&#39; messages to no</span>
+<span class="sd">        avail it was implemented here natively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">End</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">qteToBeKilled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Disconnect the update slot when Qtmacs shuts down. It is necessary</span>
+        <span class="c"># to do this explicitly because when this object is deleted the pending</span>
+        <span class="c"># signals (because of the queued connection, see the constructor) may</span>
+        <span class="c"># still be delivered. Not sure if this is a bug in PyQt4, or if this</span>
+        <span class="c"># behaviour is intentional.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigLogReady</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteUpdateLogSlot</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../../titlepage.html">
+          <img class="logo" src="../../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

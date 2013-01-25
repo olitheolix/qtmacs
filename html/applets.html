@@ -1,0 +1,303 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Applets &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="index.html" />
+    <link rel="next" title="Programming Qtmacs" href="tutorials.html" />
+    <link rel="prev" title="Concept" href="concept.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="tutorials.html" title="Programming Qtmacs"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="concept.html" title="Concept"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="applets">
+<span id="id1"></span><h1>Applets<a class="headerlink" href="#applets" title="Permalink to this headline">¶</a></h1>
+<p>The entire end-user functionality in Qtmacs is provided through <a class="reference internal" href="tutorials.html#appletdev"><em>applets</em></a>, and the default ones are listed here.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">At present, the applets are predominantly proof-of-concepts.</p>
+</div>
+<div class="section" id="scieditor">
+<h2>SciEditor<a class="headerlink" href="#scieditor" title="Permalink to this headline">¶</a></h2>
+<p>SciEditor is the main applet for editing anything but Rich Text. It is
+based on the <a class="reference external" href="http://www.scintilla.org/">Scintilla</a> widget and
+therefore inherits all the features desired and expected from a good
+code editor, including folding, syntax highlighting, bracket matching,
+line numbering, and much more. The Scintilla widget also makes a good
+use case for the modular Qtmacs concept, where the functionality is
+provided by an external widget (or a collection thereof grouped together
+in an applet), and macros only serve to expose this functionality, not
+implement it themselves.</p>
+<p class="centered">
+<strong><a class="reference external image-reference" href="_images/applet_scieditor.png"><img alt="fig1" src="_images/applet_scieditor.png" style="width: 350px;" /></a>
+ <a class="reference external image-reference" href="_images/applet_scieditor2.png"><img alt="fig2" src="_images/applet_scieditor2.png" style="width: 350px;" /></a>
+</strong></p><p>The SciEditor applets consists mainly of a <a class="reference internal" href="qtmacs_autodoc.html#module-qtmacs.extensions.qtmacsscintilla_widget" title="qtmacs.extensions.qtmacsscintilla_widget"><tt class="xref py py-mod docutils literal"><span class="pre">QtmacsScintilla</span></tt></a> widget which is itself
+derived from <a class="reference external" href="http://www.riverbankcomputing.co.uk/static/Docs/QScintilla2/index.html">PyQt4.Qsci.QSciScintilla</a>. The
+only fundamental difference to the original <a class="reference external" href="http://www.riverbankcomputing.co.uk/static/Docs/QScintilla2/index.html">QsciScintilla</a>
+widget is the augmented undo-functionality to emulates that of
+Emacs. The <a class="reference internal" href="qtmacs_autodoc.html#module-qtmacs.extensions.qtmacsscintilla_macros" title="qtmacs.extensions.qtmacsscintilla_macros"><tt class="xref py py-mod docutils literal"><span class="pre">current</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">macros</span></tt></a> implements the basic
+movement macros known from Emacs but not much more at the moment.</p>
+<p>The applet still suffers from several unfinished concepts like the mode
+bar to display document related information like its name, newline
+style, cursor position, and such. Similarly, there are no macros to
+format- or spell check text, change the programming language (for syntax
+highlighting), interpret the compiler output to highlight errors and
+warning, toggle brace matching, and more. Almost all these features are
+natively supported by Scintilla but the macros to expose them are not
+yet implemented.</p>
+<p>The SciEditor may also be useful for Rich Text Editing but this option
+has not been fully explored yet.</p>
+</div>
+<div class="section" id="richeditor">
+<h2>RichEditor<a class="headerlink" href="#richeditor" title="Permalink to this headline">¶</a></h2>
+<p>The RichEditor is similar to the SciEditor but based on the
+<a class="reference internal" href="qtmacs_autodoc.html#module-qtmacs.extensions.qtmacstextedit_widget" title="qtmacs.extensions.qtmacstextedit_widget"><tt class="xref py py-mod docutils literal"><span class="pre">QtmacsTextEdit</span></tt></a>
+widget which is itself an augmented version of <tt class="docutils literal"><span class="pre">QTextEdit</span></tt>. The widgets
+effortlessly render a subset of HTML and are thus suitable to display
+and edit rich text.</p>
+<p>Unfortunately, it is tedious to make this class completely undo safe due
+to the vast number of text modifying methods spread over several
+classes, although most of the basic editing commands are already supported.</p>
+<div class="figure align-center">
+<img alt="_images/applet_richeditor.png" src="_images/applet_richeditor.png" style="width: 700px;" />
+</div>
+</div>
+<div class="section" id="logviewer">
+<h2>LogViewer<a class="headerlink" href="#logviewer" title="Permalink to this headline">¶</a></h2>
+<p>All log messages dispatched through the Qtmacs logging system are
+automatically displayed in this applet (see <a class="reference internal" href="tutorials.html#logging"><em>Logging</em></a>). The applet
+uses colors to distinguish the different log levels (eg. info, warning,
+error), and automatically renders stack traces and error
+messages if available. The widget itself is a <tt class="docutils literal"><span class="pre">QtmacsTextEditor</span></tt>
+widget endowed with the standard macros, although it is predominantly
+for viewing purposes.</p>
+<div class="figure align-center">
+<img alt="_images/applet_logviewer.png" src="_images/applet_logviewer.png" style="width: 700px;" />
+</div>
+</div>
+<div class="section" id="module-qtmacs.applets.bash">
+<span id="bash"></span><h2>Bash<a class="headerlink" href="#module-qtmacs.applets.bash" title="Permalink to this headline">¶</a></h2>
+<p>A Bash-applet demonstration.</p>
+<p>This is a proof-of-concept to spawn a Bash shell inside Qtmacs. The
+idiosyncratic layout separates the shell output (top) from the shell
+input (bottom) because I do not know how to sensibly interact with the
+shell via pipes. As a result, the applet is clumsy and lacks the
+expected shell completion feature &#8211;&gt; suggestions welcome.</p>
+<p>This applet requires <tt class="docutils literal"><span class="pre">pexpect-u</span></tt> which can be installed via:</p>
+<div class="highlight-bash"><div class="highlight"><pre>pip-3.2 install pexpect-u
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">pip-3.x is usually available as a <cite>python3-pip</cite> package.</p>
+</div>
+<p>As with every applet, do <strong>not</strong> use:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">qtmacs.applets.bash</span> <span class="kn">import</span> <span class="n">Bash</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<img alt="_images/applet_bash.png" src="_images/applet_bash.png" style="width: 700px;" />
+</div>
+</div>
+<div class="section" id="miscellaneous">
+<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
+<p>The applets in this section are available in the <cite>demos</cite> directory.
+Their main purpose is to illustrate that applets are more or less normal
+PyQt programs which can draw on the entire Qt library to implement
+anything from web browsers to multi-threaded programs. To try these
+demos start Qtmacs with:</p>
+<div class="highlight-bash"><div class="highlight"><pre>./qtmacs.py --load ../demos/alldemos.py
+</pre></div>
+</div>
+<p>where the only purpose of the <cite>alldemos.py</cite> script is to register the
+demos in the directory. These demos can then be spawned with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span>
+<span class="pre">&lt;ctrl&gt;+a</span></tt> (hit <tt class="docutils literal"><span class="pre">&lt;tab</span></tt> afterwards to see a list of all available
+applets) from within Qtmacs.</p>
+<div class="section" id="web-browser">
+<h3>Web Browser<a class="headerlink" href="#web-browser" title="Permalink to this headline">¶</a></h3>
+<p>A simple web browser that points to the Google search engine. It accepts
+text as usual although all characters are actually inserted via
+macros. Additional macros can move the cursor to the left and right
+(<tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+b</span></tt> and <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+f</span></tt>) or scroll the page up and down
+(<tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+p</span></tt> and <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+n</span></tt>). The goal is to eventually endow the
+applet with the standard text editing macros found in the SciEditor
+applet (or Emacs), and make it possible to compose emails in web-mail
+clients as if they were local text files.</p>
+<p>The web browser is highly incomplete (you cannot even change the
+address, for example), but may be a useful template for interested
+developers (see also the <a class="reference internal" href="tutorials.html#webbrowser"><em>tutorial</em></a> on how it is
+implemented).</p>
+<div class="figure align-center">
+<img alt="_images/applet_web.png" src="_images/applet_web.png" style="width: 700px;" />
+</div>
+</div>
+<div class="section" id="multi-threading">
+<h3>Multi Threading<a class="headerlink" href="#multi-threading" title="Permalink to this headline">¶</a></h3>
+<p>Qtmacs is not multi threaded and probably never will be because Qt
+dictates that all GUI related functionality must run in the main
+thread. On the other hand, applets are free to outsource all their
+non-GUI related processing to threads and communicate with them via Qt
+signals. The <cite>demo_thread</cite> applet illustrates this concept with a
+progress bar update governed by a blocking sleep call. Since the sleep
+call is in another thread, the rest of Qtmacs remains responsive,
+eg. switching to the next applet with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+n</span></tt> works as
+usual. See also the <a class="reference internal" href="tutorials.html#threadingdev"><em>threading tutorial</em></a> for more
+information and possible pitfalls.</p>
+<div class="figure align-center">
+<img alt="_images/applet_threading.png" src="_images/applet_threading.png" style="width: 700px;" />
+</div>
+</div>
+<div class="section" id="pdf-viewer">
+<h3>PDF Viewer<a class="headerlink" href="#pdf-viewer" title="Permalink to this headline">¶</a></h3>
+<p>Rendering PDF documents through <a class="reference external" href="http://poppler.freedesktop.org/">Poppler</a> is a treat; installing it together
+with the <a class="reference external" href="https://code.google.com/p/python-poppler-qt4/">PyQt</a>
+bindings is not (see <a class="reference internal" href="tutorials.html#compilepoppler"><em>here</em></a> for how I did it).</p>
+<p>After this hurdle is taken, though, a basic PDF viewer is
+<a class="reference internal" href="tutorials.html#pdfviewerdev"><em>easy to implement</em></a>.</p>
+<div class="figure align-center">
+<img alt="_images/applet_pdf.png" src="_images/applet_pdf.png" style="width: 700px;" />
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="titlepage.html">
+          <img class="logo" src="_static/Max.png" alt="Logo"/>
+        </a></p>
+  <div class="sphinxlocaltoc">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Applets</a><ul>
+<li><a class="reference internal" href="#scieditor">SciEditor</a></li>
+<li><a class="reference internal" href="#richeditor">RichEditor</a></li>
+<li><a class="reference internal" href="#logviewer">LogViewer</a></li>
+<li><a class="reference internal" href="#module-qtmacs.applets.bash">Bash</a></li>
+<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
+<li><a class="reference internal" href="#web-browser">Web Browser</a></li>
+<li><a class="reference internal" href="#multi-threading">Multi Threading</a></li>
+<li><a class="reference internal" href="#pdf-viewer">PDF Viewer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="concept.html"
+                        title="previous chapter">Concept</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorials.html"
+                        title="next chapter">Programming Qtmacs</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/applets.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="tutorials.html" title="Programming Qtmacs"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="concept.html" title="Concept"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

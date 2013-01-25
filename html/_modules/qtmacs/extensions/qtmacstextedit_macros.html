@@ -1,0 +1,1318 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.extensions.qtmacstextedit_macros &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.extensions.qtmacstextedit_macros</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Default macros and key bindings for ``QTextEdit`` and its drop-in</span>
+<span class="sd">replacement ``QtmacsTextEdit``.</span>
+
+<span class="sd">The ``qteAddWidget`` method of ``QtmacsApplet`` uses this file to</span>
+<span class="sd">endow ``QTextEdit`` and ``QtmacsTextEdit`` widgets with their default</span>
+<span class="sd">macros and keybindings. The entry point to this module is the function</span>
+<span class="sd">``install_macros_and_bindings``.</span>
+
+<span class="sd">.. note: Macros are only registered if they do not yet exist. However,</span>
+<span class="sd">   if a macro with the same name already does exists, then it is *not*</span>
+<span class="sd">   replaced.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">qtmacs.kill_list</span>
+<span class="kn">import</span> <span class="nn">qtmacs.undo_stack</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.qte_global</span> <span class="kn">as</span> <span class="nn">qte_global</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.base_macro</span> <span class="kn">import</span> <span class="n">QtmacsMacro</span>
+
+<span class="c"># Shorthands.</span>
+<span class="n">QtmacsUndoCommand</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoCommand</span>
+<span class="n">QtmacsUndoStack</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">undo_stack</span><span class="o">.</span><span class="n">QtmacsUndoStack</span>
+<span class="n">QtmacsTextEdit</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">qtmacstextedit_widget</span><span class="o">.</span><span class="n">QtmacsTextEdit</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+
+
+<span class="c"># ------------------------------------------------------------</span>
+<span class="c">#                   Define all the macros</span>
+<span class="c"># ------------------------------------------------------------</span>
+<div class="viewcode-block" id="SelfInsert"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.SelfInsert">[docs]</a><span class="k">class</span> <span class="nc">SelfInsert</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Insert the last character from ``last_key_sequence`` defined in</span>
+<span class="sd">    the global name space.</span>
+
+<span class="sd">    The ``last_key_sequence`` variable is overwritten/updated every</span>
+<span class="sd">    time the event handler in Qtmacs receives a new keyboard event.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SelfInsert.qteRun"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.SelfInsert.qteRun">[docs]</a>    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the last ``QKeyEvent`` from the keyboard sequence</span>
+<span class="sd">        (there should only be one anyway, but just to be sure). Then</span>
+<span class="sd">        extract the human readable text it represents and call the</span>
+<span class="sd">        ``keyPressEvent`` method to insert it.</span>
+
+<span class="sd">        Note that the method simply calls the original ``keyPressEvent``</span>
+<span class="sd">        method and does not implement undo commands. The reason for the</span>
+<span class="sd">        latter is that ``keyPressEvent`` takes care of updating the undo</span>
+<span class="sd">        stack accordingly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keyEvent</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">last_key_sequence</span><span class="o">.</span><span class="n">toQKeyEventList</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">keyPressEvent</span><span class="p">(</span><span class="n">keyEvent</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Undo"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.Undo">[docs]</a><span class="k">class</span> <span class="nc">Undo</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Trigger the ``undo`` function of the active widget.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">undo</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="UndoDelCharBackward"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoDelCharBackward">[docs]</a><span class="k">class</span> <span class="nc">UndoDelCharBackward</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement del-char-backwards and its inverse.</span>
+
+<span class="sd">    This undo-object can undo any text- and HTML objects (eg. images).</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selText</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selPos</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removedChar</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="UndoDelCharBackward.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoDelCharBackward.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Insert the text at the current cursor position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># If this is the first ever call to this undo/redo element then</span>
+        <span class="c"># backup the current cursor position and the selected text (may be</span>
+        <span class="c"># none). This information will be required for the redo operation</span>
+        <span class="c"># to position the cursor (and selected text) where it was at the</span>
+        <span class="c"># very first call.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selText</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selStart</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionStart</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selEnd</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionEnd</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+
+        <span class="c"># Remove the originally selected text (may be none).</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selEnd</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Move to the start of the (just deleted) text block and insert</span>
+        <span class="c"># the characters there.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selStart</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+
+        <span class="c"># Backup the cursor position before and after the deletion.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="c"># Mark the area in between the two cursor positions, backup</span>
+        <span class="c"># the selected content, and remove it.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removedChar</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Place the cursor at the new position.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoDelCharBackward.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoDelCharBackward.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the inserted character(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># Move the cursor to the point after the deletion, re-insert the</span>
+        <span class="c"># deleted characters, and move the cursor to the point before</span>
+        <span class="c"># the deletion occurred.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos2</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">removedChar</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+
+        <span class="c"># Add the previously selected text (if there was any). Note that the</span>
+        <span class="c"># text will not be &#39;selected&#39; (ie. highlighted) this time.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selStart</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selText</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="DelCharBackward"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.DelCharBackward">[docs]</a><span class="k">class</span> <span class="nc">DelCharBackward</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete character to the left of the cursor.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span> <span class="o">==</span> <span class="n">QtmacsTextEdit</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoDelCharBackward</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span><span class="o">.</span><span class="n">deletePreviousChar</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="UndoKillLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoKillLine">[docs]</a><span class="k">class</span> <span class="nc">UndoKillLine</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement kill-line and its inverse.</span>
+
+<span class="sd">    This undo-object covers both text- and HTML objects (eg. images).</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="UndoKillLine.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoKillLine.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete the rest of the line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Get the text cursor for the current document and unselect everything.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">clearSelection</span><span class="p">()</span>
+
+        <span class="c"># If this is the first ever call to this undo/redo element then</span>
+        <span class="c"># backup the current cursor position and the selected text (may be</span>
+        <span class="c"># none). This information will be required for the redo operation</span>
+        <span class="c"># to position the cursor (and selected text) where it was at the</span>
+        <span class="c"># very first call.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+
+        <span class="c"># Ensure nothing is selected.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+
+        <span class="c"># Mark the rest of the line, store its content in this very object</span>
+        <span class="c"># and the global kill-list, and remove it.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">EndOfLine</span><span class="p">,</span>
+                        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selectionEnd</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">killedText</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">kill_list</span><span class="o">.</span><span class="n">KillListElement</span><span class="p">(</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">(),</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span><span class="o">.</span><span class="n">toHtml</span><span class="p">(),</span>
+            <span class="s">&#39;QtmacsTextEdit-Html&#39;</span><span class="p">)</span>
+        <span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+
+        <span class="c"># Apply the changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoKillLine.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoKillLine.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-insert the previously deleted line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Get the text cursor for the current document.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># Re-insert the deleted text at the correct position.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">killedText</span><span class="p">)</span>
+
+        <span class="c"># Apply the changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="KillLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.KillLine">[docs]</a><span class="k">class</span> <span class="nc">KillLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Kill to the end of the line and place the content into the kill-list.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span> <span class="o">==</span> <span class="n">QtmacsTextEdit</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoKillLine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span><span class="o">.</span><span class="n">deletePreviousChar</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="UndoYank"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoYank">[docs]</a><span class="k">class</span> <span class="nc">UndoYank</span><span class="p">(</span><span class="n">QtmacsUndoCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implement yank and its inverse.</span>
+
+<span class="sd">    This undo-object covers both text- and HTML objects (eg. images).</span>
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * ``qteWidget`` (**QWidget**): the widget to use.</span>
+<span class="sd">    * ``yankText`` (**str**): text to insert (can be plain text or Html).</span>
+<span class="sd">    * ``textType`` (**bool**): whether or not ``yankText`` is plain text</span>
+<span class="sd">       or not.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@type_check</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">,</span> <span class="n">yankText</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">textType</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="n">qteWidget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">textType</span> <span class="o">=</span> <span class="n">textType</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yankText</span> <span class="o">=</span> <span class="n">yankText</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="UndoYank.commit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoYank.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete the rest of the line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Get the text cursor for the current document and unselect</span>
+        <span class="c"># everything.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">clearSelection</span><span class="p">()</span>
+
+        <span class="c"># If this is the first ever call to this undo/redo element then</span>
+        <span class="c"># backup the current cursor position and the selected text (may be</span>
+        <span class="c"># none). This information will be required for the redo operation</span>
+        <span class="c"># to position the cursor (and selected text) where it was at the</span>
+        <span class="c"># very first call.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+
+        <span class="c"># Insert the element and keep track of how much the cursor has</span>
+        <span class="c"># moved. This is trivial to determine automatically if</span>
+        <span class="c"># `yankText` is pure text, but if it is HTML code then it is</span>
+        <span class="c"># safer to rely on Qt&#39;s builtin ``position`` method.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">textType</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yankText</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">insertHtml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yankText</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+
+        <span class="c"># Apply the changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="UndoYank.reverseCommit"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.UndoYank.reverseCommit">[docs]</a>    <span class="k">def</span> <span class="nf">reverseCommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-insert the previously removed character(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Get the text cursor for the current document.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+
+        <span class="c"># Mark the previously inserted text and remove it.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos1</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">removeSelectedText</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cursorPos0</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">MoveAnchor</span><span class="p">)</span>
+
+        <span class="c"># Apply the changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Yank"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.Yank">[docs]</a><span class="k">class</span> <span class="nc">Yank</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Re-insert the last killed element.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Do nothing if the kill-list is empty.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Fetch the last element in the kill-list. Then construct a</span>
+        <span class="c"># ``UndoYank`` object that, depending on the type of the last</span>
+        <span class="c"># element, inserts either a text string or a Html string.</span>
+        <span class="n">el</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">dataType</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;QtmacsTextEdit-Html&quot;</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoYank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">dataCustom</span><span class="p">(),</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoYank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">dataText</span><span class="p">(),</span> <span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># Push the undo-element onto the undo-stack to put the changes</span>
+        <span class="c"># into effect.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+
+        <span class="c"># Trigger the &#39;yank-qtmacs_text_edit&#39; hook (intercepted by yank-pop).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteRunHook</span><span class="p">(</span><span class="s">&#39;yank-qtmacs_text_edit&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="YankPop"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.YankPop">[docs]</a><span class="k">class</span> <span class="nc">YankPop</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace the just yanked element with the previous one in the</span>
+<span class="sd">    kill-list. This macro can handle plain text and Html.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteConnectHook</span><span class="p">(</span><span class="s">&#39;yank-qtmacs_text_edit&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">enableHook</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Do nothing if the kill-list contains no earlier element.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Remove the last yanked text along with the corresponding</span>
+        <span class="c"># undo object.</span>
+        <span class="n">undoObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">undoObj</span><span class="o">.</span><span class="n">reverseCommit</span><span class="p">()</span>
+
+        <span class="c"># Retrieve the element to yank from the kill-list and insert</span>
+        <span class="c"># it by creating another UndoYank object. Note that there is</span>
+        <span class="c"># no UndoPopYank object!</span>
+        <span class="n">el</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">dataType</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;QtmacsTextEdit-Html&quot;</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoYank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">dataCustom</span><span class="p">(),</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">undoObj</span> <span class="o">=</span> <span class="n">UndoYank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">dataText</span><span class="p">(),</span> <span class="bp">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">qteUndoStack</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">undoObj</span><span class="p">)</span>
+
+        <span class="c"># Decrement the kill-list index. The effect is that at the</span>
+        <span class="c"># next invokation an earlier element in the kill-list will</span>
+        <span class="c"># be chosen.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span> <span class="o">-=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="YankPop.disableHook"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.YankPop.disableHook">[docs]</a>    <span class="k">def</span> <span class="nf">disableHook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Disable yank-pop.</span>
+
+<span class="sd">        The ``enableHook`` method (see below) connects this method</span>
+<span class="sd">        to the ``qtesigKeyseqComplete`` signal to catch</span>
+<span class="sd">        consecutive calls to this ``yank-pop`` macro. Once the user</span>
+<span class="sd">        issues a keysequence for any other macro but this one, the</span>
+<span class="sd">        kill-list index will be set to a negative index, effectively</span>
+<span class="sd">        disabling the macro.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Unpack the data structure.</span>
+        <span class="n">macroName</span><span class="p">,</span> <span class="n">keysequence</span> <span class="o">=</span> <span class="n">msgObj</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">macroName</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqComplete</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">disableHook</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="YankPop.enableHook"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.YankPop.enableHook">[docs]</a>    <span class="k">def</span> <span class="nf">enableHook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable yank-pop.</span>
+
+<span class="sd">        This method is connected to the &#39;yank-qtmacs_text_edit&#39; hook</span>
+<span class="sd">        (triggered by the yank macro) to ensure that yank-pop only</span>
+<span class="sd">        gets activated afterwards.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">killListIdx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">qte_global</span><span class="o">.</span><span class="n">kill_list</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigKeyseqComplete</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">disableHook</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="OpenLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.OpenLine">[docs]</a><span class="k">class</span> <span class="nc">OpenLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Open a new line (ie. insert a new-line at the current cursor position).</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Remember the current cursor position.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+
+        <span class="c"># Construct a new-line key event and pass it through the keypressed</span>
+        <span class="c"># method which knows how to undo it if necessary.</span>
+        <span class="n">modQt</span><span class="p">,</span> <span class="n">keyQt</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">Qt_key_map</span><span class="p">[</span><span class="s">&#39;1&#39;</span><span class="p">]</span>
+        <span class="n">key_event</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QKeyEvent</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">KeyPress</span><span class="p">,</span> <span class="n">keyQt</span><span class="p">,</span> <span class="n">modQt</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">keyPressEvent</span><span class="p">(</span><span class="n">key_event</span><span class="p">)</span>
+
+        <span class="c"># Now that the new line was opened, return the cursor to the</span>
+        <span class="c"># original position.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ForwardChar"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.ForwardChar">[docs]</a><span class="k">class</span> <span class="nc">ForwardChar</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor one character to the right.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">NextCharacter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BackwardChar"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BackwardChar">[docs]</a><span class="k">class</span> <span class="nc">BackwardChar</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor one character to the left.</span>
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">PreviousCharacter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ForwardWord"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.ForwardWord">[docs]</a><span class="k">class</span> <span class="nc">ForwardWord</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to beginning of next word.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">NextWord</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BackwardWord"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BackwardWord">[docs]</a><span class="k">class</span> <span class="nc">BackwardWord</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to beginning of previous word.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">PreviousWord</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MoveStartOfLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.MoveStartOfLine">[docs]</a><span class="k">class</span> <span class="nc">MoveStartOfLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to the beginning of the line.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">StartOfLine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MoveEndOfLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.MoveEndOfLine">[docs]</a><span class="k">class</span> <span class="nc">MoveEndOfLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to the end of the line.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">EndOfLine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="NextLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.NextLine">[docs]</a><span class="k">class</span> <span class="nc">NextLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to next line.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">Down</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PreviousLine"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.PreviousLine">[docs]</a><span class="k">class</span> <span class="nc">PreviousLine</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to previous line.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">Up</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="EndOfBuffer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.EndOfBuffer">[docs]</a><span class="k">class</span> <span class="nc">EndOfBuffer</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to the very end of the ``QTextEdit``.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">End</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BeginningOfBuffer"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BeginningOfBuffer">[docs]</a><span class="k">class</span> <span class="nc">BeginningOfBuffer</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Move cursor to the very beginning of the ``QTextEdit``.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+<span class="sd">    * *widget*: &#39;*&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">Start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ScrollDown"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.ScrollDown">[docs]</a><span class="k">class</span> <span class="nc">ScrollDown</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scroll up by approximately as much as is currently visible.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">verticalScrollBar</span><span class="p">()</span>
+        <span class="n">tot_height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">maximumViewportSize</span><span class="p">()</span><span class="o">.</span><span class="n">height</span><span class="p">()</span>
+        <span class="n">new_value</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.9</span> <span class="o">*</span> <span class="n">tot_height</span><span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ScrollUp"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.ScrollUp">[docs]</a><span class="k">class</span> <span class="nc">ScrollUp</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scroll down by approximately as much as is currently visible.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">verticalScrollBar</span><span class="p">()</span>
+        <span class="n">tot_height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">maximumViewportSize</span><span class="p">()</span><span class="o">.</span><span class="n">height</span><span class="p">()</span>
+        <span class="n">new_value</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.9</span> <span class="o">*</span> <span class="n">tot_height</span><span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">new_value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="StrikeOutNext"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.StrikeOutNext">[docs]</a><span class="k">class</span> <span class="nc">StrikeOutNext</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Strike out the character to the right of the cursor.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Get the text cursor and character format and enable the</span>
+        <span class="c"># strikeout feature.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">cf</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">charFormat</span><span class="p">()</span>
+        <span class="n">cf</span><span class="o">.</span><span class="n">setFontStrikeOut</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># Select next character by moving the cursor and keeping the</span>
+        <span class="c"># anchor.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">NextCharacter</span><span class="p">,</span>
+                        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+
+        <span class="c"># Apply the strikeout format to the just selected character.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">setCharFormat</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+
+        <span class="c"># Clear the selection again.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">clearSelection</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="ToggleStrikeOut"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.ToggleStrikeOut">[docs]</a><span class="k">class</span> <span class="nc">ToggleStrikeOut</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Toggle the strikeout formatting for the next character.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Get the text cursor and character format.</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">cf</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">charFormat</span><span class="p">()</span>
+
+        <span class="c"># Mark the next character.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">NextCharacter</span><span class="p">,</span>
+                        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+
+        <span class="c"># Invert the strike-out format of the next character.</span>
+        <span class="k">if</span> <span class="n">tc</span><span class="o">.</span><span class="n">charFormat</span><span class="p">()</span><span class="o">.</span><span class="n">fontStrikeOut</span><span class="p">():</span>
+            <span class="c"># Already struck out: make it normal again.</span>
+            <span class="n">cf</span><span class="o">.</span><span class="n">setFontStrikeOut</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setCharFormat</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Normal character: strike it out.</span>
+            <span class="n">cf</span><span class="o">.</span><span class="n">setFontStrikeOut</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">setCharFormat</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+
+        <span class="c"># Move the cursor back to the original position thereby also</span>
+        <span class="c"># removing the anchor.</span>
+        <span class="n">tc</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">PreviousCharacter</span><span class="p">,</span>
+                        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BracketMatching"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BracketMatching">[docs]</a><span class="k">class</span> <span class="nc">BracketMatching</span><span class="p">(</span><span class="n">QtmacsMacro</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Highlight matching parenthesis.</span>
+
+<span class="sd">    |Signature|</span>
+
+<span class="sd">    * *applet*: &#39;*&#39;</span>
+<span class="sd">    * *widget*: ``QTextEdit``, ``QtmacsTextEdit``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetAppletSignature</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSetWidgetSignature</span><span class="p">((</span><span class="s">&#39;QTextEdit&#39;</span><span class="p">,</span> <span class="s">&#39;QtmacsTextEdit&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charToHighlight</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;(&#39;</span><span class="p">,</span> <span class="s">&#39;)&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">class</span> <span class="nc">BracketMatchingData</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Widget specific admin information for the bracket matching macro.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">isEnabled</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">matchingPositions</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">oldCharFormats</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Retrieve the macro specific data structure from the sender applet.</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroData</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">BracketMatchingData</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">isEnabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">isEnabled</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;Bracket Matching Disabled&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">isEnabled</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteStatus</span><span class="p">(</span><span class="s">&#39;Bracket Matching Enabled&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSaveMacroData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BracketMatching.cursorPositionChangedEvent"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BracketMatching.cursorPositionChangedEvent">[docs]</a>    <span class="k">def</span> <span class="nf">cursorPositionChangedEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the highlighting.</span>
+
+<span class="sd">        This is an overloaded version of the native Qt slot of</span>
+<span class="sd">        ``QTextEdit``.</span>
+
+<span class="sd">        In this class, the purpose of this slot is to check if the</span>
+<span class="sd">        character to the right of the cursor needs highlighting,</span>
+<span class="sd">        assuming there is a second character to pair with it.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Determine the sender and cursor position.</span>
+        <span class="n">qteWidget</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sender</span><span class="p">()</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+
+        <span class="c"># Remove all the highlighting. Since this will move the</span>
+        <span class="c"># cursor, first disconnect this very routine to avoid an</span>
+        <span class="c"># infinite recursion.</span>
+        <span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteRemoveHighlighting</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">)</span>
+        <span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+
+        <span class="c"># If we are beyond the last character (for instance because</span>
+        <span class="c"># the cursor was explicitly moved to the end of the buffer)</span>
+        <span class="c"># then there is no character to the right and will result in</span>
+        <span class="c"># an error when trying to fetch it.</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()):</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># It is save to retrieve the character to the right of the</span>
+            <span class="c"># cursor.</span>
+            <span class="n">char</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()[</span><span class="n">origin</span><span class="p">]</span>
+
+        <span class="c"># Return if the character is not in the matching list.</span>
+        <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">charToHighlight</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Disconnect the &#39;cursorPositionChanged&#39; signal from this</span>
+        <span class="c"># function because it will make changes to the cursor position</span>
+        <span class="c"># and would therefore immediately trigger itself, resulting in</span>
+        <span class="c"># an infinite recursion.</span>
+        <span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+
+        <span class="c"># If we got until here &quot;char&quot; must be one of the two</span>
+        <span class="c"># characters to highlight.</span>
+        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">charToHighlight</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">origin</span>
+            <span class="c"># Found the first character, so now look for the second</span>
+            <span class="c"># one. If this second character does not exist the</span>
+            <span class="c"># function returns &#39;-1&#39; which is safe because the</span>
+            <span class="c"># ``self.highlightCharacter`` method can deal with this.</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charToHighlight</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                <span class="n">start</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Found the second character so the start index is indeed</span>
+            <span class="c"># the stop index.</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">origin</span>
+
+            <span class="c"># Search for the preceeding first character.</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">qteWidget</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charToHighlight</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                  <span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+
+        <span class="c"># Highlight the characters.</span>
+        <span class="n">oldCharFormats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">highlightCharacters</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">),</span>
+                                                  <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">blue</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+        <span class="c"># Store the positions of the changed character in the</span>
+        <span class="c"># macroData structure of this widget.</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroData</span><span class="p">(</span><span class="n">qteWidget</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">matchingPositions</span> <span class="o">=</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">oldCharFormats</span> <span class="o">=</span> <span class="n">oldCharFormats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSaveMacroData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">qteWidget</span><span class="p">)</span>
+
+        <span class="c"># Reconnect the &#39;cursorPositionChanged&#39; signal.</span>
+        <span class="n">qteWidget</span><span class="o">.</span><span class="n">cursorPositionChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cursorPositionChangedEvent</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BracketMatching.qteRemoveHighlighting"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BracketMatching.qteRemoveHighlighting">[docs]</a>    <span class="k">def</span> <span class="nf">qteRemoveHighlighting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the highlighting from previously highlighted characters.</span>
+
+<span class="sd">        The method access instance variables to determine which</span>
+<span class="sd">        characters are currently highlighted and have to be converted</span>
+<span class="sd">        to non-highlighted ones.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``widgetObj`` (**QWidget**): the ``QTextEdit`` to use.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Retrieve the widget specific macro data.</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMacroData</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># If the data structure is empty then no previously</span>
+        <span class="c"># highlighted characters exist in this particular widget, so</span>
+        <span class="c"># do nothing.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">matchingPositions</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># Restore the original character formats, ie. undo the</span>
+        <span class="c"># highlighting changes.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">highlightCharacters</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">matchingPositions</span><span class="p">,</span>
+                                 <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">black</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">oldCharFormats</span><span class="p">)</span>
+
+        <span class="c"># Clear the data structure to indicate that no further</span>
+        <span class="c"># highlighted characters exist in this particular widget.</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">matchingPositions</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">oldCharFormats</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteSaveMacroData</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BracketMatching.highlightCharacters"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.extensions.qtmacstextedit_macros.BracketMatching.highlightCharacters">[docs]</a>    <span class="k">def</span> <span class="nf">highlightCharacters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">,</span> <span class="n">setPos</span><span class="p">,</span> <span class="n">colorCode</span><span class="p">,</span>
+                            <span class="n">fontWeight</span><span class="p">,</span> <span class="n">charFormat</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the character format of one or more characters.</span>
+
+<span class="sd">        If ``charFormat`` is **None** then only the color and font</span>
+<span class="sd">        weight of the characters are changed to ``colorCode`` and</span>
+<span class="sd">        ``fontWeight``, respectively.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``widgetObj`` (**QWidget**): the ``QTextEdit`` holding</span>
+<span class="sd">          the characters.</span>
+<span class="sd">        * ``setPos`` (**tuple** of **int**): character positions</span>
+<span class="sd">          inside the widget.</span>
+<span class="sd">        * ``colorCode`` (**QColor**): eg. ``QtCore.Qt.blue``</span>
+<span class="sd">        * ``fontWeight`` (**int**): font weight.</span>
+<span class="sd">        * ``charFormat`` (**QTextCharFormat**): the character</span>
+<span class="sd">          format to apply (see Qt documentation for details.)</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **list**: the original character format of the replaced</span>
+<span class="sd">          characters. This list has the same length as ``setPos``.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Get the text cursor and character format.</span>
+        <span class="n">textCursor</span> <span class="o">=</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
+        <span class="n">oldPos</span> <span class="o">=</span> <span class="n">textCursor</span><span class="o">.</span><span class="n">position</span><span class="p">()</span>
+        <span class="n">retVal</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Change the character formats of all the characters placed at</span>
+        <span class="c"># the positions ``setPos``.</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">setPos</span><span class="p">):</span>
+            <span class="c"># Extract the position of the character to modify.</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">setPos</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+
+            <span class="c"># Ignore invalid positions. This can happen if the second</span>
+            <span class="c"># character does not exist and the find-functions in the</span>
+            <span class="c"># ``cursorPositionChangedEvent`` method returned</span>
+            <span class="c"># &#39;-1&#39;. Also, store **None** as the format for this</span>
+            <span class="c"># non-existent character.</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">retVal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c"># Move the text cursor to the specified character position</span>
+            <span class="c"># and store its original character format (necessary to</span>
+            <span class="c"># &quot;undo&quot; the highlighting once the cursor was moved away</span>
+            <span class="c"># again).</span>
+            <span class="n">textCursor</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+            <span class="n">retVal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">textCursor</span><span class="o">.</span><span class="n">charFormat</span><span class="p">())</span>
+
+            <span class="c"># Change the character format. Either use the supplied</span>
+            <span class="c"># one, or use a generic one.</span>
+            <span class="k">if</span> <span class="n">charFormat</span><span class="p">:</span>
+                <span class="c"># Use a specific character format (usually used to</span>
+                <span class="c"># undo the changes a previous call to</span>
+                <span class="c"># &#39;highlightCharacters&#39; has made).</span>
+                <span class="n">fmt</span> <span class="o">=</span> <span class="n">charFormat</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># Modify the color and weight of the current character format.</span>
+                <span class="n">fmt</span> <span class="o">=</span> <span class="n">textCursor</span><span class="o">.</span><span class="n">charFormat</span><span class="p">()</span>
+
+                <span class="c"># Get the brush and specify its foreground color and</span>
+                <span class="c"># style. In order to see the characters it is</span>
+                <span class="c"># necessary to explicitly specify a solidPattern style</span>
+                <span class="c"># but I have no idea why.</span>
+                <span class="n">myBrush</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">foreground</span><span class="p">()</span>
+                <span class="n">myBrush</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="n">colorCode</span><span class="p">)</span>
+                <span class="n">myBrush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+                <span class="n">fmt</span><span class="o">.</span><span class="n">setForeground</span><span class="p">(</span><span class="n">myBrush</span><span class="p">)</span>
+                <span class="n">fmt</span><span class="o">.</span><span class="n">setFontWeight</span><span class="p">(</span><span class="n">fontWeight</span><span class="p">)</span>
+
+            <span class="c"># Select the character and apply the selected format.</span>
+            <span class="n">textCursor</span><span class="o">.</span><span class="n">movePosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">NextCharacter</span><span class="p">,</span>
+                                    <span class="n">QtGui</span><span class="o">.</span><span class="n">QTextCursor</span><span class="o">.</span><span class="n">KeepAnchor</span><span class="p">)</span>
+            <span class="n">textCursor</span><span class="o">.</span><span class="n">setCharFormat</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+
+        <span class="c"># Apply the textcursor to the current element.</span>
+        <span class="n">textCursor</span><span class="o">.</span><span class="n">setPosition</span><span class="p">(</span><span class="n">oldPos</span><span class="p">)</span>
+        <span class="n">widgetObj</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">textCursor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">retVal</span>
+
+
+<span class="c"># ------------------------------------------------------------</span>
+<span class="c">#               Assign the default key bindings</span>
+<span class="c"># ------------------------------------------------------------</span>
+</div></div>
+<span class="k">def</span> <span class="nf">install_macros_and_bindings</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">):</span>
+    <span class="n">qteMain</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">qteMain</span>
+
+    <span class="c"># ------------------------------------------------------------</span>
+    <span class="c">#  Install macros for alphanumeric characters. Note that all</span>
+    <span class="c">#  these characters are processed by the self-insert macro.</span>
+    <span class="c"># ------------------------------------------------------------</span>
+
+    <span class="c"># All alphanumerical characters are processed by the same macro,</span>
+    <span class="c"># namely &#39;self-insert&#39;. Therefore, specify all alphanumerical</span>
+    <span class="c"># macros in a string and then install them in a loop. This is more</span>
+    <span class="c"># readable and flexible than writing three dozen bind commands.</span>
+    <span class="n">char_list</span> <span class="o">=</span> <span class="s">&quot;abcdefghijklmnopqrstuvwxyz&quot;</span>
+    <span class="n">char_list</span> <span class="o">+=</span> <span class="n">char_list</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">char_list</span> <span class="o">+=</span> <span class="s">&quot;0123456789&quot;</span>
+    <span class="n">char_list</span> <span class="o">+=</span> <span class="s">&quot;&#39;</span><span class="se">\\</span><span class="s">[],=-.;/`&amp;^~*!|#(){}$&lt;&gt;%+?_&quot;</span>
+
+    <span class="c"># Register the macro if it is not already.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteIsMacroRegistered</span><span class="p">(</span><span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">):</span>
+        <span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">SelfInsert</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">)</span>
+
+    <span class="c"># Install the self-insert macro for every character in the</span>
+    <span class="c"># char_list.</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">char_list</span><span class="p">:</span>
+        <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+
+    <span class="c"># Install the self-insert macro for some additional keys that</span>
+    <span class="c"># cannot easily be added to char_list.</span>
+    <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+    <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;space&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+    <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;colon&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+    <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;return&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+    <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="s">&#39;&lt;enter&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;self-insert&#39;</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+
+    <span class="c"># ------------------------------------------------------------</span>
+    <span class="c">#  Install macros and key-bindings for all other macros.</span>
+    <span class="c"># ------------------------------------------------------------</span>
+
+    <span class="c"># For readability purposes, compile a list where each entry</span>
+    <span class="c"># contains the macro name, macro class, and key binding associated</span>
+    <span class="c"># with this macro.</span>
+    <span class="n">macro_list</span> <span class="o">=</span> <span class="p">((</span><span class="n">DelCharBackward</span><span class="p">,</span> <span class="s">&#39;&lt;backspace&gt;&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">ForwardChar</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+f&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">ForwardWord</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+f&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">BackwardChar</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+b&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">BackwardWord</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+b&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">MoveStartOfLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+a&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">MoveEndOfLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+e&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">NextLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+n&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">PreviousLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+p&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">EndOfBuffer</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+&gt;&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">BeginningOfBuffer</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+&lt;&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">ToggleStrikeOut</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">StrikeOutNext</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">BracketMatching</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+m&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">OpenLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+o&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">Undo</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+/&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">ScrollDown</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+v&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">ScrollUp</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+v&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">KillLine</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+k&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">Yank</span><span class="p">,</span> <span class="s">&#39;&lt;ctrl&gt;+y&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">YankPop</span><span class="p">,</span> <span class="s">&#39;&lt;alt&gt;+y&#39;</span><span class="p">),</span>
+                  <span class="p">)</span>
+
+    <span class="c"># Iterate over the list of macros and their keybinding and</span>
+    <span class="c"># register them if they are not already.</span>
+    <span class="k">for</span> <span class="n">macroCls</span><span class="p">,</span> <span class="n">keysequence</span> <span class="ow">in</span> <span class="n">macro_list</span><span class="p">:</span>
+        <span class="c"># Get the macro name.</span>
+        <span class="n">macroName</span> <span class="o">=</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteMacroNameMangling</span><span class="p">(</span><span class="n">macroCls</span><span class="p">)</span>
+
+        <span class="c"># Register the macro if it has not been already.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">qteMain</span><span class="o">.</span><span class="n">qteIsMacroRegistered</span><span class="p">(</span><span class="n">macroName</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">):</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteRegisterMacro</span><span class="p">(</span><span class="n">macroCls</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">macroName</span><span class="p">)</span>
+
+        <span class="c"># Assign the macro a keyboard shortcut if one is available.</span>
+        <span class="k">if</span> <span class="n">keysequence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">qteMain</span><span class="o">.</span><span class="n">qteBindKeyWidget</span><span class="p">(</span><span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../../titlepage.html">
+          <img class="logo" src="../../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

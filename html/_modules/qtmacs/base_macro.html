@@ -1,0 +1,604 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>qtmacs.base_macro &mdash; Qtmacs 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="top" title="Qtmacs 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for qtmacs.base_macro</h1><div class="highlight"><pre>
+<span class="c"># Copyright 2012, Oliver Nagy &lt;qtmacsdev@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This file is part of Qtmacs.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is free software: you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># Qtmacs is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with Qtmacs. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Provide ``QtmacsMacro``, the base class for all Qtmacs macros.</span>
+
+<span class="sd">To implement a macro, subclass ``QtmacsMacro``, specify the applet-</span>
+<span class="sd">and signatures it is compatible with in the constructor, and overload</span>
+<span class="sd">the (by default empty) ``qteRun`` method.</span>
+
+<span class="sd">Usage example::</span>
+
+<span class="sd">    class DemoMacroLineEdit(QtmacsMacro):</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        Display hello world in the status applet of Qtmacs.</span>
+
+<span class="sd">        |Signature|</span>
+
+<span class="sd">        * *applet*: &#39;*&#39;</span>
+<span class="sd">        * *widget*: &#39;*&#39;</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+<span class="sd">        def __init__(self):</span>
+<span class="sd">            super().__init__()</span>
+<span class="sd">            self.qteSetAppletSignature(&#39;*&#39;)</span>
+<span class="sd">            self.qteSetWidgetSignature(&#39;*&#39;)</span>
+
+<span class="sd">        def qteRun(self):</span>
+<span class="sd">            self.qteMain.qteStatus(&#39;Hello world&#39;)</span>
+
+
+<span class="sd">Noteworthy facts about macros:</span>
+
+<span class="sd">* Macros are instantiated as soon as they are registered, and will not</span>
+<span class="sd">  be re-instantiated ever again (ie. all instance variables defined</span>
+<span class="sd">  during runtime will remain there for as long as Qtmacs is running).</span>
+<span class="sd">* Every macro calls has at most one instance.</span>
+
+<span class="sd">Macros always carry the following attributes:</span>
+
+<span class="sd">* ``qteMain``: reference to ``QtmacsMain`` instance,</span>
+<span class="sd">* ``qteLogger``: reference to the Qtmacs logging mechanism,</span>
+<span class="sd">* ``qteVersionInformation``: instance of ``QtmacsVersionStructure``,</span>
+<span class="sd">* ``self.qteApplet``: reference to the active applet,</span>
+<span class="sd">* ``self.qteWidget``: reference to the active widget.</span>
+
+<span class="sd">The first three attributes are fixed for entire life of the macro, the</span>
+<span class="sd">last two attributes are automatically updated before the ``qteRun``</span>
+<span class="sd">method is called and always point to the applet and widget that were</span>
+<span class="sd">active when the macro shortcut was triggered (or the macro was queried</span>
+<span class="sd">via the mini applet). As such, ``qteApplet`` is never **None**,</span>
+<span class="sd">whereas ``qteWidget`` can be (eg. an empty applet).</span>
+
+<span class="sd">It is safe to use::</span>
+
+<span class="sd">    from macro import QtmacsMacro</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">qtmacs.auxiliary</span>
+<span class="kn">import</span> <span class="nn">qtmacs.type_check</span>
+<span class="kn">import</span> <span class="nn">qtmacs.qte_global</span> <span class="kn">as</span> <span class="nn">qte_global</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">qtmacs.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c"># Shorthands</span>
+<span class="n">type_check</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">type_check</span><span class="o">.</span><span class="n">type_check</span>
+<span class="n">QtmacsKeymap</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsKeymap</span>
+<span class="n">QtmacsMessage</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsMessage</span>
+<span class="n">QtmacsKeysequence</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsKeysequence</span>
+<span class="n">QtmacsVersionStructure</span> <span class="o">=</span> <span class="n">qtmacs</span><span class="o">.</span><span class="n">auxiliary</span><span class="o">.</span><span class="n">QtmacsVersionStructure</span>
+
+
+<div class="viewcode-block" id="QtmacsMacro"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro">[docs]</a><span class="k">class</span> <span class="nc">QtmacsMacro</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Macros for ``Qtmacs`` must inherit from this class.</span>
+
+<span class="sd">    To write a custom macro, set the applet- and widget signature</span>
+<span class="sd">    compatibilities, and overload the ``qteRun`` method.</span>
+
+<span class="sd">    Every macro has the following five attributes available to them at</span>
+<span class="sd">    run time:</span>
+
+<span class="sd">    * ``qteMain``: reference to QtmacsMain instance (comes straight</span>
+<span class="sd">      from the global variables).</span>
+<span class="sd">    * ``qteLogger``: the Qtmacs wide logger (see ``logger`` module</span>
+<span class="sd">      in Python standard library).</span>
+<span class="sd">    * ``self.qteApplet``: reference to the calling applet.</span>
+<span class="sd">    * ``self.qteWidget``: reference to the calling widget.</span>
+<span class="sd">    * ``self.qteVersionInformation``: version information.</span>
+
+<span class="sd">    The first attibute is a reference to the one and only</span>
+<span class="sd">    ``QtmacsMain`` instance and the the second attribute to its</span>
+<span class="sd">    logging mechanism (a logger from the ``logger`` module in the</span>
+<span class="sd">    standard Python library). The ``qteApplet`` and ``qteWidget``</span>
+<span class="sd">    attributes are updated before the ``qteRun`` method is triggered</span>
+<span class="sd">    and therefore always current inside the ``qteRun`` method. The</span>
+<span class="sd">    last attribute contains general information not used by Qtmacs</span>
+<span class="sd">    directly.</span>
+
+<span class="sd">    A minimalist example that works for all applets and widgets would</span>
+<span class="sd">    be the following (put this in your configuration file)::</span>
+
+<span class="sd">        class SampleMacro(QtmacsMacro):</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            Display a status message.</span>
+<span class="sd">            \&quot;\&quot;\&quot;</span>
+<span class="sd">            def __init__(self):</span>
+<span class="sd">                super().__init__()</span>
+
+<span class="sd">                # This macro works for all applet- and widget signatures.</span>
+<span class="sd">                self.qteSetAppletSignature(&#39;*&#39;)</span>
+<span class="sd">                self.qteSetWidgetSignature(&#39;*&#39;)</span>
+
+<span class="sd">            def qteRun(self):</span>
+<span class="sd">                \&quot;\&quot;\&quot;</span>
+<span class="sd">                Overload the virtual qteRun method with our desired</span>
+<span class="sd">                functionality.</span>
+<span class="sd">                \&quot;\&quot;\&quot;</span>
+<span class="sd">                msg = (&#39;This is the &lt;b&gt;{}&lt;/b&gt; macro speaking&#39;</span>
+<span class="sd">                       .format(self.macroName))</span>
+<span class="sd">                self.qteMain.qteStatus(msg)</span>
+
+<span class="sd">        # Register the macro with Qtmacs.</span>
+<span class="sd">        qteRegisterMacro(SampleMacro)</span>
+
+
+<span class="sd">    |Args|</span>
+
+<span class="sd">    * **None**</span>
+
+<span class="sd">    |Signals|</span>
+
+<span class="sd">    * ``qtesigMacroError``: a macro triggered an exception it did not handle.</span>
+
+<span class="sd">      - ``macroName`` (**str**): name of macro.</span>
+<span class="sd">      - ``widgetObj`` (**QWidget**): target of macro (ie. the value of</span>
+<span class="sd">        ``qteWidget`` when its ``qteRun`` method was called).</span>
+
+<span class="sd">    * ``qtesigMacroStart``: a macro is about to be executed.</span>
+
+<span class="sd">      - ``macroName`` (**str**): name of macro.</span>
+<span class="sd">      - ``widgetObj`` (**QWidget**): target of macro (ie. the value of</span>
+<span class="sd">        ``qteWidget`` when its ``qteRun`` method was called).</span>
+
+<span class="sd">    * ``qtesigMacroFinished``: a macro finished without raising an</span>
+<span class="sd">      un-handled error.</span>
+
+<span class="sd">      - ``macroName`` (**str**): name of macro.</span>
+<span class="sd">      - ``widgetObj`` (**QWidget**): target of macro (ie. the value of</span>
+<span class="sd">        ``qteWidget`` when its ``qteRun`` method was called).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="c"># Reference to QtmacsMain instance and its logger.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span> <span class="o">=</span> <span class="n">qte_global</span><span class="o">.</span><span class="n">qteMain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteLogger</span>
+
+        <span class="c"># Version information for this applet.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteVersionInformation</span> <span class="o">=</span> <span class="n">QtmacsVersionStructure</span><span class="p">()</span>
+
+        <span class="c"># Macro name as a string (will be set by qteRegisterMacro)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteMacroName</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># These two variables are set by ``_qteRunQueuedMacro`` and</span>
+        <span class="c"># specify the applet and widget respectively, that were active</span>
+        <span class="c"># when the macro was activated. Note that ``qteApplet``</span>
+        <span class="c"># cannot be **None** whereas ``qteWidget`` can.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># List of applet- and widget signature that are compatible</span>
+        <span class="c"># with this macro. An empty list implies that it is</span>
+        <span class="c"># compatible with all applets and widgets. This is typically</span>
+        <span class="c"># the case for macros that do not operate directly on applets,</span>
+        <span class="c"># eg. ``otherApplet``. It is the macro programmer&#39;s</span>
+        <span class="c"># responsibility to set this variable appropriately.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteAppletSignatures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteWidgetSignatures</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="QtmacsMacro.qteMacroName"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteMacroName">[docs]</a>    <span class="k">def</span> <span class="nf">qteMacroName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return applet the macro name as a string.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **str**: macro name.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteMacroName</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMacro.qteSaveMacroData"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSaveMacroData">[docs]</a>    <span class="k">def</span> <span class="nf">qteSaveMacroData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Associate arbitrary ``data`` with ``widgetObj``.</span>
+
+<span class="sd">        This is a convenience method to easily store applet/widget</span>
+<span class="sd">        specific information in between calls.</span>
+
+<span class="sd">        If ``widgetObj`` is **None** then the calling widget</span>
+<span class="sd">        ``self.qteWidget`` will be used.</span>
+
+<span class="sd">        Note that this function overwrites any previously saved data.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``data`` (**object**): arbitrary python object to save.</span>
+<span class="sd">        * ``widgetObj`` (**QWidget**): the widget/applet with which</span>
+<span class="sd">          the data should be associated.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        * **QtmacsOtherError** if ``widgetObj`` was not added with</span>
+<span class="sd">          ``qteAddWidget`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Check type of input arguments.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">widgetObj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;&lt;widgetObj&gt; was probably not added with &lt;qteAddWidget&gt;&#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; method because it lacks the &lt;_qteAdmin&gt; attribute.&#39;</span>
+            <span class="k">raise</span> <span class="n">QtmacsOtherError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c"># If no widget was specified then use the calling widget.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">widgetObj</span><span class="p">:</span>
+            <span class="n">widgetObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span>
+
+        <span class="c"># Store the supplied data in the applet specific macro storage.</span>
+        <span class="n">widgetObj</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">macroData</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">()]</span> <span class="o">=</span> <span class="n">data</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMacro.qteMacroData"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteMacroData">[docs]</a>    <span class="k">def</span> <span class="nf">qteMacroData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widgetObj</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve ``widgetObj`` specific data previously saved with</span>
+<span class="sd">        ``qteSaveMacroData``.</span>
+
+<span class="sd">        If no data has been stored previously then **None** is</span>
+<span class="sd">        returned.</span>
+
+<span class="sd">        If ``widgetObj`` is **None** then the calling widget</span>
+<span class="sd">        ``self.qteWidget`` will be used.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``widgetObj`` (**QWidget**): the widget/applet with which</span>
+<span class="sd">          the data should be associated.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **object**: the previously stored data.</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        * **QtmacsOtherError** if ``widgetObj`` was not added with</span>
+<span class="sd">          ``qteAddWidget`` method.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Check type of input arguments.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widgetObj</span><span class="p">,</span> <span class="s">&#39;_qteAdmin&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">widgetObj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;&lt;widgetObj&gt; was probably not added with &lt;qteAddWidget&gt;&#39;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; method because it lacks the &lt;_qteAdmin&gt; attribute.&#39;</span>
+            <span class="k">raise</span> <span class="n">QtmacsOtherError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c"># If no widget was specified then use the calling widget.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">widgetObj</span><span class="p">:</span>
+            <span class="n">widgetObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span>
+
+        <span class="c"># Retrieve the data structure.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">macroData</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">()]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c"># If the entry does not exist then this is a bug; create</span>
+            <span class="c"># an empty entry for next time.</span>
+            <span class="n">widgetObj</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">macroData</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Return the data.</span>
+        <span class="k">return</span> <span class="n">widgetObj</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">macroData</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">()]</span>
+</div>
+<div class="viewcode-block" id="QtmacsMacro.qteAppletSignature"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteAppletSignature">[docs]</a>    <span class="k">def</span> <span class="nf">qteAppletSignature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a copy of the applet signatures with which this macro</span>
+<span class="sd">        is compatible.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **tuple of str**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteAppletSignatures</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsMacro.qteWidgetSignature"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteWidgetSignature">[docs]</a>    <span class="k">def</span> <span class="nf">qteWidgetSignature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a copy of the widget signatures with which this macro</span>
+<span class="sd">        is compatible.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **tuple of str**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteWidgetSignatures</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMacro.qteSetAppletSignature"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSetAppletSignature">[docs]</a>    <span class="k">def</span> <span class="nf">qteSetAppletSignature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appletSignatures</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Specify the applet signatures with which this macro is compatible.</span>
+
+<span class="sd">        Qtmacs uses this information at run time to determine if this</span>
+<span class="sd">        macro is compatible with a particular applet, as specified by</span>
+<span class="sd">        the applet&#39;s signature. Note that this function overwrites</span>
+<span class="sd">        all previously set values.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``*appletSignatures`` (**str, tuple, list**): applet signatures</span>
+<span class="sd">          as a string, or tuple/list of strings.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Convert the argument to a tuple if it is not already a tuple</span>
+        <span class="c"># or list.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">appletSignatures</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="n">appletSignatures</span> <span class="o">=</span> <span class="n">appletSignatures</span><span class="p">,</span>
+
+        <span class="c"># Ensure that all arguments in the tuple/list are strings.</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">appletSignatures</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;appletSignatures&#39;</span><span class="p">,</span> <span class="s">&#39;str&#39;</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+                <span class="k">raise</span> <span class="n">QtmacsArgumentError</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="c"># Store the compatible applet signatures as a tuple (of strings).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteAppletSignatures</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">appletSignatures</span><span class="p">)</span>
+</div>
+    <span class="nd">@type_check</span>
+<div class="viewcode-block" id="QtmacsMacro.qteSetWidgetSignature"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteSetWidgetSignature">[docs]</a>    <span class="k">def</span> <span class="nf">qteSetWidgetSignature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widgetSignatures</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Specify the widget signatures with which this macro is</span>
+<span class="sd">        compatible.</span>
+
+<span class="sd">        Qtmacs uses this information at run time to determine if this</span>
+<span class="sd">        macro is compatible with a particular widget, as specified by</span>
+<span class="sd">        the widget&#39;s signature. Note that this function overwrites all</span>
+<span class="sd">        previously set values.</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * ``*widgetSignatures`` (**str, tuple, list**): widget signatures</span>
+<span class="sd">          as a string, or tuple/list of strings.</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **QtmacsArgumentError** if at least one argument has an invalid type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Convert the argument to a tuple if it is not already a tuple</span>
+        <span class="c"># or list.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widgetSignatures</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="n">widgetSignatures</span> <span class="o">=</span> <span class="n">widgetSignatures</span><span class="p">,</span>
+
+        <span class="c"># Ensure that all arguments in the tuple/list are strings.</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">widgetSignatures</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;widgetSignatures&#39;</span><span class="p">,</span> <span class="s">&#39;str&#39;</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">])</span>
+                <span class="k">raise</span> <span class="n">QtmacsArgumentError</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="c"># Store the compatible widget signatures as a tuple (of strings).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qteWidgetSignatures</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">widgetSignatures</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsMacro.qtePrepareToRun"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qtePrepareToRun">[docs]</a>    <span class="k">def</span> <span class="nf">qtePrepareToRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is called by Qtmacs to prepare the macro for</span>
+<span class="sd">        execution.</span>
+
+<span class="sd">        It is probably a bad idea to overload this method as it only</span>
+<span class="sd">        administrates the macro execution and calls the ``qteRun``</span>
+<span class="sd">        method (which *should* be overloaded by the macro programmer</span>
+<span class="sd">        in order for the macro to do something).</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Report the execution attempt.</span>
+        <span class="n">msgObj</span> <span class="o">=</span> <span class="n">QtmacsMessage</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteWidget</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">msgObj</span><span class="o">.</span><span class="n">setSignalName</span><span class="p">(</span><span class="s">&#39;qtesigMacroStart&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigMacroStart</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">msgObj</span><span class="p">)</span>
+
+        <span class="c"># Try to run the macro and radio the success via the</span>
+        <span class="c"># ``qtesigMacroFinished`` signal.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteRun</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigMacroFinished</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">msgObj</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">appID</span> <span class="o">=</span> <span class="n">appSig</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">appID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteAppletID</span><span class="p">()</span>
+                <span class="n">appSig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteApplet</span><span class="o">.</span><span class="n">qteAppletSignature</span><span class="p">()</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Macro &lt;b&gt;{}&lt;/b&gt; (called from the &lt;b&gt;{}&lt;/b&gt; applet&#39;</span>
+                   <span class="s">&#39; with ID &lt;b&gt;{}&lt;/b&gt;) did not execute properly.&#39;</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qteMacroName</span><span class="p">(),</span> <span class="n">appSig</span><span class="p">,</span> <span class="n">appID</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">QtmacsArgumentError</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39;&lt;br/&gt;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+
+            <span class="c"># Irrespective of the error, log it, enable macro</span>
+            <span class="c"># processing (in case it got disabled), and trigger the</span>
+            <span class="c"># error signal.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qteEnableMacroProcessing</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteMain</span><span class="o">.</span><span class="n">qtesigMacroError</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">msgObj</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stack_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="QtmacsMacro.qteRun"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.base_macro.QtmacsMacro.qteRun">[docs]</a>    <span class="k">def</span> <span class="nf">qteRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The actual macro code.</span>
+
+<span class="sd">        Overload this method with your own code. This method has</span>
+<span class="sd">        access to the calling applet and widget via ``self.qteApplet``</span>
+<span class="sd">        (never **None**) and ``self.qteWidget`` (may be **None**).</span>
+
+<span class="sd">        |Args|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Returns|</span>
+
+<span class="sd">        * **None**</span>
+
+<span class="sd">        |Raises|</span>
+
+<span class="sd">        * **None**</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../titlepage.html">
+          <img class="logo" src="../../_static/Max.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">Qtmacs 0.1 documentation</a> &raquo;</li>
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012-2013, Oliver Nagy.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>
