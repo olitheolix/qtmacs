@@ -1,0 +1,25 @@
+Qtmacs
+======
+
+An Emacs inspired macro framework for Qt.
+
+
+Requirements
+============
+
+* Python 3.2
+* Qt 4.8
+* PyQt 4.8
+
+
+Documentation
+=============
+
+The documentation is available at
+http://qtmacsdev.github.com/qtmacs/titlepage.html
+
+
+Source Code
+===========
+
+https://github.com/qtmacsdev/qtmacs

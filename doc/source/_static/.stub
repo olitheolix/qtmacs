@@ -1,0 +1,4 @@
+This file ensures that GIT adds this directory to the repository. The
+sole purpose of this directory is to suppress a harmless warning when
+building the Sphinx documentation.
+
