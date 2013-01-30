@@ -21,9 +21,9 @@ A demo for displaying PDF files.
 This demo depends on a working popplerqt4 installation
 (http://code.google.com/p/python-poppler-qt4/).
 
-As with every applet, do not use::
+As with every applet, do **not** use::
 
-    from demo_pdf import DemoPDF
+    from qtmacs.applets.pdf_reader import PDFReader
 
 """
 
@@ -35,7 +35,7 @@ from qtmacs.base_applet import QtmacsApplet
 from qtmacs.base_macro import QtmacsMacro
 
 
-class DemoPDF(QtmacsApplet):
+class PDFReader(QtmacsApplet):
     """
     Display the first page of a PDF file using Python-Poppler library.
     """
@@ -125,7 +125,7 @@ class ScrollDown(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoPDF')
+        self.qteSetAppletSignature('PDFReader')
         self.qteSetWidgetSignature('QScrollArea')
 
     def qteRun(self):
@@ -141,7 +141,7 @@ class ScrollUp(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoPDF')
+        self.qteSetAppletSignature('PDFReader')
         self.qteSetWidgetSignature('QScrollArea')
 
     def qteRun(self):

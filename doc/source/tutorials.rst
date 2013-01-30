@@ -669,10 +669,10 @@ it remotely useful).
 
 Threading
 ---------
-Qtmacs itself is not, and never will be, a multi threaded
-application. The simple reason is that Qt demands that all GUI elements
-(ie. everything from ``QtGui.*``) runs in the same thread, which
-necessarily includes all the Qtmacs windows and applets.
+Qtmacs itself is not, and presumablynever will be, a multi threaded
+application. The simple reason is that Qt requires all GUI elements
+(ie. everything from ``QtGui.*``) to run in the same thread, which
+necessarily includes the Qtmacs windows and applets.
 
 However, non-GUI related code is not affected by this restriction.
 Computationally intense routines can therefore be moved into a separate

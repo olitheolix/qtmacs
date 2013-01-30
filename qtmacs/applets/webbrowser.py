@@ -18,9 +18,9 @@
 """
 A demo for displaying web pages.
 
-As with every applet, do not use::
+As with every applet, do **not** use::
 
-    from demo_web import DemoWeb
+    from qtmacs.applets.webbrowser import WebBrowser
 
 """
 import qtmacs.qte_global as qte_global
@@ -30,7 +30,7 @@ from qtmacs.base_applet import QtmacsApplet
 from qtmacs.base_macro import QtmacsMacro
 
 
-class DemoWeb(QtmacsApplet):
+class WebBrowser(QtmacsApplet):
     """
     A Web Browser Demo.
     """
@@ -96,7 +96,7 @@ class ScrollDown(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):
@@ -114,7 +114,7 @@ class ScrollUp(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):
@@ -132,7 +132,7 @@ class SelfInsert(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):
@@ -146,7 +146,7 @@ class BackwardChar(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):
@@ -159,7 +159,7 @@ class ForwardChar(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):
@@ -172,7 +172,7 @@ class ShowActiveElement(QtmacsMacro):
     """
     def __init__(self):
         super().__init__()
-        self.qteSetAppletSignature('DemoWeb')
+        self.qteSetAppletSignature('WebBrowser')
         self.qteSetWidgetSignature('QWebView')
 
     def qteRun(self):

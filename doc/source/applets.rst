@@ -96,26 +96,9 @@ Bash
    :width: 700px
    :align: center
 
-Miscellaneous
-=============
-
-The applets in this section are available in the `demos` directory.
-Their main purpose is to illustrate that applets are more or less normal
-PyQt programs which can draw on the entire Qt library to implement
-anything from web browsers to multi-threaded programs. To try these
-demos start Qtmacs with:
-
-.. code-block:: bash
-
-    ./qtmacs.py --load ../demos/alldemos.py
-
-where the only purpose of the `alldemos.py` script is to register the
-demos in the directory. These demos can then be spawned with ``<ctrl>+x
-<ctrl>+a`` (hit ``<tab`` afterwards to see a list of all available
-applets) from within Qtmacs.
 
 Web Browser
------------
+===========
 A simple web browser that points to the Google search engine. It accepts
 text as usual although all characters are actually inserted via
 macros. Additional macros can move the cursor to the left and right
@@ -134,26 +117,9 @@ implemented).
    :width: 700px
    :align: center
 
-Multi Threading
----------------
-
-Qtmacs is not multi threaded and probably never will be because Qt
-dictates that all GUI related functionality must run in the main
-thread. On the other hand, applets are free to outsource all their
-non-GUI related processing to threads and communicate with them via Qt
-signals. The `demo_thread` applet illustrates this concept with a
-progress bar update governed by a blocking sleep call. Since the sleep
-call is in another thread, the rest of Qtmacs remains responsive,
-eg. switching to the next applet with ``<ctrl>+x <ctrl>+n`` works as
-usual. See also the :ref:`threading tutorial <ThreadingDev>` for more
-information and possible pitfalls.
-
-.. figure::  images/applet_threading.png
-   :width: 700px
-   :align: center
 
 PDF Viewer
-----------
+==========
 
 Rendering PDF documents through `Poppler
 <http://poppler.freedesktop.org/>`_ is a treat; installing it together

@@ -18,11 +18,11 @@ changed during runtime to customise the functionality and behaviour of
 Qtmacs as required.
 
 
-SOURCE CODE
-===========
+PROJECT STATUS
+==============
 
-The source code is hosted on Github:
-https://github.com/qtmacsdev/qtmacs
+Qtmacs is currently in alpha status yet useful enough to demonstrate the
+concept.
 
 
 REQUIREMENTS
@@ -32,7 +32,6 @@ REQUIREMENTS
 * PyQt4
 
 Older versions of PyQt4 may work as well but have not been tested.
-
 
 INSTALLATION
 ============

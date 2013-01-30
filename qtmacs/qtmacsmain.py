@@ -644,8 +644,12 @@ class QtmacsWindow(QtGui.QWidget):
         self._qteAdmin.widgetSignature = '__QtmacsMain__'
         self._qteWindowID = windowID
 
-        # Set the window title.
+        # Set the window title and icon.
         self.setWindowTitle('Qtmacs Window: {}'.format(self._qteWindowID))
+
+        # Locate the Qtmacs logo and install it as the application icon.
+        path, _ = os.path.split(qtmacs.qtmacsmain.__file__)
+        self.setWindowIcon(QtGui.QIcon(path + '/misc/Max.png'))
 
         # Specify the initial size of the main applet.
         self.setGeometry(windowPos)
@@ -2717,13 +2721,8 @@ class QtmacsMain(QtCore.QObject):
         """
         Import ``fileName`` at run-time.
 
-        Note that ``fileName`` must be in the search path or include
-        the full path name.
-
-        This method uses the ``imp`` module from the Python library a
-        a code snippet found at
-        (http://code.activestate.com/recipes/159571-importing-any-
-        file-without-modifying-syspath/)
+        If ``fileName`` has no path prefix then it must be in the
+        standard Python module path. Relative path names are possible.
 
         |Args|
 
@@ -2743,25 +2742,34 @@ class QtmacsMain(QtCore.QObject):
         path, name = os.path.split(fileName)
         name, ext = os.path.splitext(name)
 
+        # If the file name has a path prefix then search there, other
+        # search the default paths for Python.
+        if path == '':
+            path = sys.path
+        else:
+            path = [path]
+
         # Try to locate the module.
         try:
-            file, filename, data = imp.find_module(name,
-                                                   sys.path.insert(0, path))
+            fp, pathname, desc = imp.find_module(name, path)
         except ImportError:
-            msg = 'Could not find module <b>{}</b>.'.format(name)
-            self.qteLogger.exception(msg)
+            msg = 'Could not find module <b>{}</b>.'.format(fileName)
+            self.qteLogger.error(msg)
             return None
 
         # Try to import the module.
         try:
-            mod = imp.load_module(name, file, filename, data)
+            mod = imp.load_module(name, fp, pathname, desc)
             return mod
-        except Exception as err:
-            msg = 'Error in module <b>{}</b>.'.format(name)
-            if isinstance(err, QtmacsArgumentError):
-                msg += '<br/>' + str(err)
-            self.qteLogger.exception(msg)
+        except ImportError:
+            msg = 'Could not import module <b>{}</b>.'.format(fileName)
+            self.qteLogger.error(msg)
             return None
+        finally:
+            # According to the imp documentation the file pointer
+            # should always be closed explicitly.
+            if fp:
+                fp.close()
 
     def qteMacroNameMangling(self, macroCls):
         """
@@ -3279,7 +3287,7 @@ class QtmacsMain(QtCore.QObject):
 
     @type_check
     def qteBindKeyWidget(self, keysequence, macroName: str,
-                                 widgetObj: QtGui.QWidget):
+                         widgetObj: QtGui.QWidget):
         """
         Bind ``macroName`` to ``widgetObj`` and associate it with
         ``keysequence``.
@@ -3599,7 +3607,7 @@ class QtmacsMain(QtCore.QObject):
         overwrite the existing definition or ignore the registration
         request altogether. In the first case, none of the already
         instantiated applets will be affected, only newly created ones
-        will be instantiated from the just registered class.
+        will use the new definition.
 
         .. note:: this method expects a *class*, not an instance.
 
@@ -3629,14 +3637,12 @@ class QtmacsMain(QtCore.QObject):
 
         # Issue a warning if an applet with this name already exists.
         if class_name in self._qteRegistryApplets:
+            msg = 'The original applet <b>{}</b>'.format(class_name)
             if replaceApplet:
-                msg = 'Applet <b>{}</b> already exists.'.format(class_name)
-                msg += ' Existing applet will be overwritten.'
+                msg += ' was redefined.'
                 self.qteLogger.warning(msg)
             else:
-                msg = 'Applet <b>{}</b> already exists - not replaced.'
-                msg = msg.format(class_name)
-                msg += ' Current definition will be overwritten.'
+                msg += ' was not redefined.'
                 self.qteLogger.warning(msg)
                 return class_name
 

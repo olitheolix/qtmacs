@@ -79,19 +79,19 @@ class RichEditor(qtmacs.base_applet.QtmacsApplet):
 
     def displayStartupScreen(self):
         """
-        Display a GNU head and the GPL.
+        Display the Qtmacs logo (Max) together with the GPL.
         """
         # Determine the path of the Qtmacs application because this is
         # also where the image file is located.
         path, _ = os.path.split(qtmacs.qtmacsmain.__file__)
 
-        # Load and insert the image at the current position.
-        img = QtGui.QImage(path + '/startup_image.png')
+        # Load the image and insert it at the current position.
+        img = QtGui.QImage(path + '/misc/Max.png')
         tc = self.qteText.textCursor()
         tc.insertImage(img)
         self.qteText.setTextCursor(tc)
 
-        # Display whatever is in the startup_text.txt (probably the GPL).
-        startup_text = open(path + '/startup_text.txt').readlines()
-        startup_text = ''.join(startup_text)
-        self.qteText.append('\n\n' + startup_text)
+        # Display the GPL text.
+        gpl_text = open(path + '/misc/gpl.txt').readlines()
+        gpl_text = ''.join(gpl_text)
+        self.qteText.append('\n\n' + gpl_text)

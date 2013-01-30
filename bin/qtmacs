@@ -1,30 +1,40 @@
 #!/usr/bin/python3
 """
-Check requirements and start Qtmacs.
+Check PyQt4 requirements and start Qtmacs.
 """
 
 import os
 import sys
 import argparse
+import platform
+import ctypes
+
+# The following code is to ensure that windows uses the Qtmacs logo in
+# the taskbar instead of the default Python logo. The code is from
+# stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon
+# and I have no idea how or why it works.
+if 'windows' in platform.system().lower():
+    appid = 'Qtmacs'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
 try:
     import sip
     from PyQt4 import QtCore, QtGui
     _PyQtVersion = QtCore.PYQT_VERSION_STR
 except ImportError:
-    print('PyQt4 not found.')
+    print('PyQt4 not found. Please refer to\n'
+          'http://qtmacsdev.github.com/qtmacs/installation.html\n'
+          'for installation instructions')
     sys.exit(1)
 
 try:
     from PyQt4 import Qsci
 except ImportError:
     print('PyQt4 was installed without the Qsci module.\n'
-          'Please consult the PyQt4 documentation on how\n'
-          'to install it. On Debian/Linux based systems\n'
-          'you can usually install it with\n'
-          '  >> sudo apt-get install python3-pyqt4.Qsci')
-    sys.exit(1)
-
+          'This is not a problem but the Scintilla based.\n'
+          'code editor will not be available. Please refer to\n'
+          'http://qtmacsdev.github.com/qtmacs/installation.html\n'
+          'for installation instructions')
 
 sys.path.insert(0, '../')
 import qtmacs.qtmacsmain
@@ -34,14 +44,8 @@ from qtmacs.exceptions import *
 # Shorthands
 type_check = qtmacs.type_check.type_check
 
-"""
-Main program
-"""
-
 
 def versionCheck():
-    import platform
-
     # Get Python version.
     pyver = platform.python_version()
     try:
