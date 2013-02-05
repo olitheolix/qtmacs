@@ -112,4 +112,4 @@ To work directly with the source code:
 
    git clone https://github.com/qtmacsdev/qtmacs.git
    cd qtmacs/bin
-   ./qtmacs.py
+   ./qtmacs
