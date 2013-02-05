@@ -153,22 +153,8 @@ expected shell completion feature &#8211;&gt; suggestions welcome.</p>
 <img alt="_images/applet_bash.png" src="_images/applet_bash.png" style="width: 700px;" />
 </div>
 </div>
-<div class="section" id="miscellaneous">
-<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
-<p>The applets in this section are available in the <cite>demos</cite> directory.
-Their main purpose is to illustrate that applets are more or less normal
-PyQt programs which can draw on the entire Qt library to implement
-anything from web browsers to multi-threaded programs. To try these
-demos start Qtmacs with:</p>
-<div class="highlight-bash"><div class="highlight"><pre>./qtmacs.py --load ../demos/alldemos.py
-</pre></div>
-</div>
-<p>where the only purpose of the <cite>alldemos.py</cite> script is to register the
-demos in the directory. These demos can then be spawned with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span>
-<span class="pre">&lt;ctrl&gt;+a</span></tt> (hit <tt class="docutils literal"><span class="pre">&lt;tab</span></tt> afterwards to see a list of all available
-applets) from within Qtmacs.</p>
 <div class="section" id="web-browser">
-<h3>Web Browser<a class="headerlink" href="#web-browser" title="Permalink to this headline">¶</a></h3>
+<h2>Web Browser<a class="headerlink" href="#web-browser" title="Permalink to this headline">¶</a></h2>
 <p>A simple web browser that points to the Google search engine. It accepts
 text as usual although all characters are actually inserted via
 macros. Additional macros can move the cursor to the left and right
@@ -185,24 +171,8 @@ implemented).</p>
 <img alt="_images/applet_web.png" src="_images/applet_web.png" style="width: 700px;" />
 </div>
 </div>
-<div class="section" id="multi-threading">
-<h3>Multi Threading<a class="headerlink" href="#multi-threading" title="Permalink to this headline">¶</a></h3>
-<p>Qtmacs is not multi threaded and probably never will be because Qt
-dictates that all GUI related functionality must run in the main
-thread. On the other hand, applets are free to outsource all their
-non-GUI related processing to threads and communicate with them via Qt
-signals. The <cite>demo_thread</cite> applet illustrates this concept with a
-progress bar update governed by a blocking sleep call. Since the sleep
-call is in another thread, the rest of Qtmacs remains responsive,
-eg. switching to the next applet with <tt class="docutils literal"><span class="pre">&lt;ctrl&gt;+x</span> <span class="pre">&lt;ctrl&gt;+n</span></tt> works as
-usual. See also the <a class="reference internal" href="tutorials.html#threadingdev"><em>threading tutorial</em></a> for more
-information and possible pitfalls.</p>
-<div class="figure align-center">
-<img alt="_images/applet_threading.png" src="_images/applet_threading.png" style="width: 700px;" />
-</div>
-</div>
 <div class="section" id="pdf-viewer">
-<h3>PDF Viewer<a class="headerlink" href="#pdf-viewer" title="Permalink to this headline">¶</a></h3>
+<h2>PDF Viewer<a class="headerlink" href="#pdf-viewer" title="Permalink to this headline">¶</a></h2>
 <p>Rendering PDF documents through <a class="reference external" href="http://poppler.freedesktop.org/">Poppler</a> is a treat; installing it together
 with the <a class="reference external" href="https://code.google.com/p/python-poppler-qt4/">PyQt</a>
 bindings is not (see <a class="reference internal" href="tutorials.html#compilepoppler"><em>here</em></a> for how I did it).</p>
@@ -210,7 +180,6 @@ bindings is not (see <a class="reference internal" href="tutorials.html#compilep
 <a class="reference internal" href="tutorials.html#pdfviewerdev"><em>easy to implement</em></a>.</p>
 <div class="figure align-center">
 <img alt="_images/applet_pdf.png" src="_images/applet_pdf.png" style="width: 700px;" />
-</div>
 </div>
 </div>
 </div>
@@ -232,12 +201,8 @@ bindings is not (see <a class="reference internal" href="tutorials.html#compilep
 <li><a class="reference internal" href="#richeditor">RichEditor</a></li>
 <li><a class="reference internal" href="#logviewer">LogViewer</a></li>
 <li><a class="reference internal" href="#module-qtmacs.applets.bash">Bash</a></li>
-<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
 <li><a class="reference internal" href="#web-browser">Web Browser</a></li>
-<li><a class="reference internal" href="#multi-threading">Multi Threading</a></li>
 <li><a class="reference internal" href="#pdf-viewer">PDF Viewer</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>

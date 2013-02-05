@@ -11,13 +11,15 @@ to interact with Qt widgets, and can group widgets into logically
 independent applets. The screenshots below show applet examples to edit
 rich text, write code, read PDF files, or browse the web.
 
-.. |logo1| image:: images/desktop_kubuntu1204.png
+.. |logo1| image:: images/desktop_kubuntu1210.png
    :width: 330px
-   :target: _images/desktop_kubuntu1204.png
+   :height: 250px
+   :target: _images/desktop_kubuntu1210.png
 
-.. |logo2| image:: images/desktop_win7.png
+.. |logo2| image:: images/desktop_win8.png
    :width: 330px
-   :target: _images/desktop_win7.png
+   :height: 250px
+   :target: _images/desktop_win8.png
 
 .. |logo3| image:: images/split_2.png
    :width: 155px
@@ -41,31 +43,32 @@ rich text, write code, read PDF files, or browse the web.
 
 .. centered::
    |logo1|  |logo2|
-   Qtmacs with multiple windows on Kubuntu 12.10 (left) and
-   Windows 7 (right).
+   Qtmacs on Kubuntu 12.10 (left) and Windows 8 (right).
 
 
 Applets are dynamically loaded PyQt programs to define and augment the
 functionality of Qtmacs. Likewise, macros can also be loaded and altered
 at runtime to customise the applet behaviour. Both can draw on the
-entire Qt library and third-party PyQt modules to fullfill their
+entire Qt library and third-party PyQt modules to fulfil their
 purpose. Together, they can furnish a fully customised work environment.
 
 
-Purpose
-=======
-A just-for-fun project to see if it can be done.
+Installation
+============
+Qtmacs can be installed from source,  with binary installers on Windows,
+and via frontends for the `Python Package Index
+<http://pypi.python.org/pypi/qtmacs>`_ (eg. `pip`). In all cases a
+working Python3.x and PyQt4-3.x installation is mandatory. See the
+:ref:`installation section <Installation>` for more details.
 
 Documentation
 =============
 
-This is the documentation of Qtmacs. Notable points of interest are
-probably the :ref:`installation instructions <Installation>`, the brief
-:ref:`Qtmacs tour <QtmacsTour>` to explain basic shortcuts,
-and the equally brief descriptions of the current :ref:`applets
-<Applets>`.
+This is the Qtmacs documentation. Notable points of interest are
+probably the brief :ref:`Qtmacs tour <QtmacsTour>` and the equally brief
+:ref:`applet descriptions <Applets>`.
 
-If you are interested in writing applets- and macros for Qtmacs yourself
+If you are interested in applet- and macro development for Qtmacs
 then the :ref:`tutorial <Tutorials>` section and :ref:`API <API>`
 documentation will get you started (if not, let me know).
 
@@ -80,6 +83,10 @@ Development Status
 ==================
 Qtmacs is currently in alpha status but mature enough to demonstrate
 the basic concepts.
+
+Project Purpose
+===============
+A just-for-fun project to see if it can be done.
 
 Contact
 =======

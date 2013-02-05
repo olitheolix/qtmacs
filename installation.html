@@ -71,35 +71,80 @@
 <p>Qtmacs is currently developed with:</p>
 <ul class="simple">
 <li>Python 3.2,</li>
-<li>Qt 4.8,</li>
-<li>and PyQt 4.8.</li>
+<li>PyQt 4.8.</li>
 </ul>
-<p>Older versions of Qt and Python <em>may</em> work as well, but Python 3.x is
+<p>Older versions of PyQt and Python <em>may</em> work as well, but Python 3.x is
 mandatory. Qtmacs should run on any platform supported by Python,
-Qt, and PyQt4 (ie. at least Linux/X11, Windows, and Mac).</p>
+and PyQt4 (ie. at least Linux/X11, Windows, and Mac).</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Optional applets may require extra libraries (eg. the PDF
 applet requires <cite>Poppler</cite>).</p>
 </div>
 </div>
-<div class="section" id="id1">
-<h2>Installation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Qtmacs requires the Qt library and the PyQt4 bindings, including the
-<cite>Qsci</cite> (ie. Scintilla) component of PyQt4 which may be in a separate
-package (eg. <cite>python3-pyqt4.Qsci</cite> or similar).</p>
-<p>Then clone the repository and start Qtmacs with the following commands:</p>
-<div class="highlight-bash"><div class="highlight"><pre>git clone https://github.com/qtmacsdev/qtmacs.git
-<span class="nb">cd </span>qtmacs/bin
-./qtmacs.py --load ../demos/alldemos.py
+<div class="section" id="binary-installation">
+<h2>Binary Installation<a class="headerlink" href="#binary-installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="windows-7-8">
+<h3>Windows 7 &amp; 8<a class="headerlink" href="#windows-7-8" title="Permalink to this headline">¶</a></h3>
+<p>You need <a class="reference external" href="http://python.org">Python 3</a> and the matching
+<a class="reference external" href="http://riverbankcomputing.com/software/pyqt/download">PyQt-Py3.x</a>
+library. Only the 3.2 versions of Python and PyQt4 have been tested but
+3.3 should work as well. For Python 3.2 proceed as follows:</p>
+<ul class="simple">
+<li>Install <a class="reference external" href="http://www.python.org/download/releases/3.2.3/">Python 3.2</a></li>
+<li>Install <a class="reference external" href="http://riverbankcomputing.com/software/pyqt/download">PyQt-Py3.2</a> and use the
+<cite>Full Installation</cite> option when asked (it is the default).</li>
+</ul>
+<p>Then download the Qtmacs installer from <a class="reference external" href="http://pypi.python.org/pypi/qtmacs/0.1.0">here</a>.</p>
+</div>
+<div class="section" id="k-ubuntu">
+<h3>(K)Ubuntu<a class="headerlink" href="#k-ubuntu" title="Permalink to this headline">¶</a></h3>
+<p>These instructions were tested on <a class="reference external" href="http://www.ubuntu.com">Ubuntu 12.10</a> and <a class="reference external" href="http://www.kubuntu.org">Kubuntu 12.10</a>.</p>
+<p>As root, install Qtmacs with the following commands:</p>
+<div class="highlight-bash"><div class="highlight"><pre>sudo apt-get install python3-pip python3-pyqt4.qsci
+pip-3.2 install qtmacs
 </pre></div>
 </div>
-<p>This should present you with the following startup screen.</p>
-<div class="figure">
-<img alt="_images/startup_screen.png" src="_images/startup_screen.png" style="width: 700px;" />
+<p>Then start Qtmacs from the command line with</p>
+<div class="highlight-bash"><div class="highlight"><pre>qtmacs
+</pre></div>
 </div>
-<p>For a brief introduction on how to use Qtmacs, please see the
-<a class="reference internal" href="qtmacstour.html#qtmacstour"><em>Qtmacs tour</em></a>.</p>
+</div>
+<div class="section" id="fedora">
+<h3>Fedora<a class="headerlink" href="#fedora" title="Permalink to this headline">¶</a></h3>
+<p>These instructions were tested on <a class="reference external" href="http://fedoraproject.org/">Fedora 18</a></p>
+<p>As root, install Qtmacs with the following commands:</p>
+<div class="highlight-bash"><div class="highlight"><pre>yum install python3-pip python3-PyQt4
+python3-pip install qtmacs
+</pre></div>
+</div>
+<p>Then start Qtmacs from the command line with</p>
+<div class="highlight-bash"><div class="highlight"><pre>qtmacs
+</pre></div>
+</div>
+</div>
+<div class="section" id="opensuse">
+<h3>OpenSuse<a class="headerlink" href="#opensuse" title="Permalink to this headline">¶</a></h3>
+<p>These instructions were tested on <a class="reference external" href="http://en.opensuse.org/Portal:12.2">openSUSE 12.2</a> (Gnome edition).</p>
+<p>As root, install Qtmacs with the following commands:</p>
+<div class="highlight-bash"><div class="highlight"><pre>zypper in python3-qscintilla python3-pip python3-xml
+pip-3.2 install qtmacs
+</pre></div>
+</div>
+<p>Then start Qtmacs from the command line with</p>
+<div class="highlight-bash"><div class="highlight"><pre>qtmacs
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="source-installation">
+<h2>Source Installation<a class="headerlink" href="#source-installation" title="Permalink to this headline">¶</a></h2>
+<p>To work directly with the source code:</p>
+<div class="highlight-bash"><div class="highlight"><pre>git clone https://github.com/qtmacsdev/qtmacs.git
+<span class="nb">cd </span>qtmacs/bin
+./qtmacs.py
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -117,7 +162,14 @@ package (eg. <cite>python3-pyqt4.Qsci</cite> or similar).</p>
   <ul>
 <li><a class="reference internal" href="#">Getting Qtmacs</a><ul>
 <li><a class="reference internal" href="#system-requirements">System Requirements</a></li>
-<li><a class="reference internal" href="#id1">Installation</a></li>
+<li><a class="reference internal" href="#binary-installation">Binary Installation</a><ul>
+<li><a class="reference internal" href="#windows-7-8">Windows 7 &amp; 8</a></li>
+<li><a class="reference internal" href="#k-ubuntu">(K)Ubuntu</a></li>
+<li><a class="reference internal" href="#fedora">Fedora</a></li>
+<li><a class="reference internal" href="#opensuse">OpenSuse</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#source-installation">Source Installation</a></li>
 </ul>
 </li>
 </ul>

@@ -140,22 +140,22 @@
 </div>
 <div class="viewcode-block" id="RichEditor.displayStartupScreen"><a class="viewcode-back" href="../../../qtmacs_autodoc.html#qtmacs.applets.richeditor.RichEditor.displayStartupScreen">[docs]</a>    <span class="k">def</span> <span class="nf">displayStartupScreen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Display a GNU head and the GPL.</span>
+<span class="sd">        Display the Qtmacs logo (Max) together with the GPL.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># Determine the path of the Qtmacs application because this is</span>
         <span class="c"># also where the image file is located.</span>
         <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">qtmacsmain</span><span class="o">.</span><span class="n">__file__</span><span class="p">)</span>
 
-        <span class="c"># Load and insert the image at the current position.</span>
-        <span class="n">img</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QImage</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/startup_image.png&#39;</span><span class="p">)</span>
+        <span class="c"># Load the image and insert it at the current position.</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QImage</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/misc/Max.png&#39;</span><span class="p">)</span>
         <span class="n">tc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">textCursor</span><span class="p">()</span>
         <span class="n">tc</span><span class="o">.</span><span class="n">insertImage</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">setTextCursor</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span>
 
-        <span class="c"># Display whatever is in the startup_text.txt (probably the GPL).</span>
-        <span class="n">startup_text</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/startup_text.txt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-        <span class="n">startup_text</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">startup_text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">startup_text</span><span class="p">)</span></div></div>
+        <span class="c"># Display the GPL text.</span>
+        <span class="n">gpl_text</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/misc/gpl.txt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">gpl_text</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gpl_text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qteText</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">gpl_text</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>

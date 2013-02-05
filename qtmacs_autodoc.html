@@ -2908,12 +2908,8 @@ variable should be defined.</li>
 <dt id="qtmacs.qtmacsmain.QtmacsMain.qteImportModule">
 <tt class="descname">qteImportModule</tt><big>(</big><em>*args</em>, <em>**kwds</em><big>)</big><a class="reference internal" href="_modules/qtmacs/qtmacsmain.html#QtmacsMain.qteImportModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qtmacs.qtmacsmain.QtmacsMain.qteImportModule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import <tt class="docutils literal"><span class="pre">fileName</span></tt> at run-time.</p>
-<p>Note that <tt class="docutils literal"><span class="pre">fileName</span></tt> must be in the search path or include
-the full path name.</p>
-<p>This method uses the <tt class="docutils literal"><span class="pre">imp</span></tt> module from the Python library a
-a code snippet found at
-(<a class="reference external" href="http://code.activestate.com/recipes/159571-importing-any">http://code.activestate.com/recipes/159571-importing-any</a>-
-file-without-modifying-syspath/)</p>
+<p>If <tt class="docutils literal"><span class="pre">fileName</span></tt> has no path prefix then it must be in the
+standard Python module path. Relative path names are possible.</p>
 <p><strong>Args</strong></p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">fileName</span></tt> (<strong>str</strong>): file name (with full path) of module
@@ -3257,7 +3253,7 @@ returned in <tt class="docutils literal"><span class="pre">app_name</span></tt>.
 overwrite the existing definition or ignore the registration
 request altogether. In the first case, none of the already
 instantiated applets will be affected, only newly created ones
-will be instantiated from the just registered class.</p>
+will use the new definition.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">this method expects a <em>class</em>, not an instance.</p>
@@ -4592,7 +4588,7 @@ distinguish applets.</li>
 <dl class="method">
 <dt id="qtmacs.applets.richeditor.RichEditor.displayStartupScreen">
 <tt class="descname">displayStartupScreen</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/qtmacs/applets/richeditor.html#RichEditor.displayStartupScreen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qtmacs.applets.richeditor.RichEditor.displayStartupScreen" title="Permalink to this definition">¶</a></dt>
-<dd><p>Display a GNU head and the GPL.</p>
+<dd><p>Display the Qtmacs logo (Max) together with the GPL.</p>
 </dd></dl>
 
 <dl class="method">

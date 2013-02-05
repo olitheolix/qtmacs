@@ -705,8 +705,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_qteAdmin</span><span class="o">.</span><span class="n">widgetSignature</span> <span class="o">=</span> <span class="s">&#39;__QtmacsMain__&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_qteWindowID</span> <span class="o">=</span> <span class="n">windowID</span>
 
-        <span class="c"># Set the window title.</span>
+        <span class="c"># Set the window title and icon.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s">&#39;Qtmacs Window: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qteWindowID</span><span class="p">))</span>
+
+        <span class="c"># Locate the Qtmacs logo and install it as the application icon.</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">qtmacs</span><span class="o">.</span><span class="n">qtmacsmain</span><span class="o">.</span><span class="n">__file__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowIcon</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s">&#39;/misc/Max.png&#39;</span><span class="p">))</span>
 
         <span class="c"># Specify the initial size of the main applet.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">windowPos</span><span class="p">)</span>
@@ -2778,13 +2782,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Import ``fileName`` at run-time.</span>
 
-<span class="sd">        Note that ``fileName`` must be in the search path or include</span>
-<span class="sd">        the full path name.</span>
-
-<span class="sd">        This method uses the ``imp`` module from the Python library a</span>
-<span class="sd">        a code snippet found at</span>
-<span class="sd">        (http://code.activestate.com/recipes/159571-importing-any-</span>
-<span class="sd">        file-without-modifying-syspath/)</span>
+<span class="sd">        If ``fileName`` has no path prefix then it must be in the</span>
+<span class="sd">        standard Python module path. Relative path names are possible.</span>
 
 <span class="sd">        |Args|</span>
 
@@ -2804,25 +2803,34 @@
         <span class="n">path</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fileName</span><span class="p">)</span>
         <span class="n">name</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
+        <span class="c"># If the file name has a path prefix then search there, other</span>
+        <span class="c"># search the default paths for Python.</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+
         <span class="c"># Try to locate the module.</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="nb">file</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
-                                                   <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+            <span class="n">fp</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Could not find module &lt;b&gt;{}&lt;/b&gt;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Could not find module &lt;b&gt;{}&lt;/b&gt;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fileName</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
 
         <span class="c"># Try to import the module.</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">mod</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">file</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">mod</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Error in module &lt;b&gt;{}&lt;/b&gt;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">QtmacsArgumentError</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39;&lt;br/&gt;&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Could not import module &lt;b&gt;{}&lt;/b&gt;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fileName</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c"># According to the imp documentation the file pointer</span>
+            <span class="c"># should always be closed explicitly.</span>
+            <span class="k">if</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="QtmacsMain.qteMacroNameMangling"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteMacroNameMangling">[docs]</a>    <span class="k">def</span> <span class="nf">qteMacroNameMangling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">macroCls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -3340,7 +3348,7 @@
 </div>
     <span class="nd">@type_check</span>
 <div class="viewcode-block" id="QtmacsMain.qteBindKeyWidget"><a class="viewcode-back" href="../../qtmacs_autodoc.html#qtmacs.qtmacsmain.QtmacsMain.qteBindKeyWidget">[docs]</a>    <span class="k">def</span> <span class="nf">qteBindKeyWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keysequence</span><span class="p">,</span> <span class="n">macroName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                                 <span class="n">widgetObj</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+                         <span class="n">widgetObj</span><span class="p">:</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Bind ``macroName`` to ``widgetObj`` and associate it with</span>
 <span class="sd">        ``keysequence``.</span>
@@ -3660,7 +3668,7 @@
 <span class="sd">        overwrite the existing definition or ignore the registration</span>
 <span class="sd">        request altogether. In the first case, none of the already</span>
 <span class="sd">        instantiated applets will be affected, only newly created ones</span>
-<span class="sd">        will be instantiated from the just registered class.</span>
+<span class="sd">        will use the new definition.</span>
 
 <span class="sd">        .. note:: this method expects a *class*, not an instance.</span>
 
@@ -3690,14 +3698,12 @@
 
         <span class="c"># Issue a warning if an applet with this name already exists.</span>
         <span class="k">if</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qteRegistryApplets</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;The original applet &lt;b&gt;{}&lt;/b&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">replaceApplet</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Applet &lt;b&gt;{}&lt;/b&gt; already exists.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
-                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; Existing applet will be overwritten.&#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; was redefined.&#39;</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Applet &lt;b&gt;{}&lt;/b&gt; already exists - not replaced.&#39;</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">class_name</span><span class="p">)</span>
-                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; Current definition will be overwritten.&#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s">&#39; was not redefined.&#39;</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">qteLogger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">class_name</span>
 
