@@ -52,7 +52,7 @@ Put this into a file (eg. `demo.py`), run
 
 .. code-block:: bash
 
-   ./qtmacs.py demo.py
+   ./qtmacs --load demo.py
 
 instantiate the applet with ``<ctrl>+x <ctrl>+a``, and type
 'TextQtmacsScintilla'.

@@ -46,7 +46,7 @@ To try out the source code directly use:
 
    git clone https://github.com/qtmacsdev/qtmacs.git
    cd qtmacs/bin
-   ./qtmacs.py
+   ./qtmacs
 
 
 DOCUMENTATION

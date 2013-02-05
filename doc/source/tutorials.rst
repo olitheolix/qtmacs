@@ -139,7 +139,7 @@ To try out the macro, invoke Qtmacs from the console with
 
 .. code-block:: bash
 
-   ./qtmacs.py --load tut_1.py
+   ./qtmacs --load tut_1.py
 
 press ``<alt>+x``, enter ``hello-world`` (you may use ``<tab>``
 completion) and see the `Hello world` string appear in the console
@@ -181,7 +181,7 @@ Restarting Qtmacs once more with
 
 .. code-block:: bash
 
-   ./qtmacs.py --load tut_1.py
+   ./qtmacs --load tut_1.py
 
 allows us to conveniently invoke the ``hello-world`` with the
 keyboard shortcut ``<ctrl>+d h``, although the manual way via
@@ -338,7 +338,7 @@ After invoking Qtmacs from the shell like so
 
 .. code-block:: bash
 
-   ./qtmacs.py --load tut_2.py
+   ./qtmacs --load tut_2.py
 
 the following screen will (hopefully) appear:
 
@@ -559,7 +559,7 @@ Then start Qtmacs with
 
 .. code-block:: bash
 
-   ./qtmacs.py --load logdemo.py
+   ./qtmacs --load logdemo.py
 
 to generate the following output in the LogViewer:
 
@@ -881,7 +881,7 @@ Then start Qtmacs with
 
 .. code-block:: bash
 
-    ./qtmacs.py --load tut_6.py
+    ./qtmacs --load tut_6.py
 
 which should display the first page of the PDF document like so:
 
@@ -976,7 +976,7 @@ Then start Qtmacs with
 
 .. code-block:: bash
 
-   ./qtmacs.py --load tut_3.py
+   ./qtmacs --load tut_3.py
 
 .. _SigExampleWidgetDefault:
 
