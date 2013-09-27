@@ -38,17 +38,18 @@ try:
     qteMain.qteRegisterApplet(qtmacs.applets.pdf_reader.PDFReader)
 except ImportError:
     msg = errMsg.format('PDFReader')
-    msg += ' Are you missing the Python-Poppler bindings?.'
+    msg += ' You may be missing <i>Python-Poppler?</i>.'
     qteMain.qteLogger.info(msg)
 
 # Register the Bash applet. This may fail for various reasons,
-# most notably on systems without a Bash (eg. Windows) or when
-# the pexpect-u module is not installed.
+# most notably on systems without a Bash (eg. Windows), or when
+# 'pyte' is not installed.
 try:
     import qtmacs.applets.bash
     qteMain.qteRegisterApplet(qtmacs.applets.bash.Bash)
 except ImportError:
     msg = errMsg.format('Bash')
+    msg += ' You may be missing <i>Pyte</i>?.'
     qteMain.qteLogger.info(msg)
 
 # Instantiate the WebBrowser applet and point it to the

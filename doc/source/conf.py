@@ -21,12 +21,13 @@ import sys
 # is relative to the documentation root, use os.path.abspath to make
 # it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
-sys.path.append('../../')
-sys.path.append('../../demos')
-sys.path.append('../../qtmacs')
-sys.path.append('../../qtmacs/applets')
-sys.path.append('../../qtmacs/extensions')
-sys.path.append('../../qtmacs.miniapplets')
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../demos'))
+sys.path.insert(0, os.path.abspath('../../qtmacs'))
+sys.path.insert(0, os.path.abspath('../../qtmacs/applets'))
+sys.path.insert(0, os.path.abspath('../../qtmacs/extensions'))
+sys.path.insert(0, os.path.abspath('../../qtmacs/miniapplets'))
+sys.path.insert(0, os.path.abspath('../../modules/qbash'))
 
 # -- General configuration -------------------------------------------
 

@@ -898,10 +898,10 @@ class QtmacsScintilla(Qsci.QsciScintilla):
     def SCISetStyling(self, line: int, col: int,
                       numChar: int, style: bytearray):
         """
-        Pythonic wrapper for the SCI_SETSTYLINGEX command.
+        Pythonic wrapper for the SCI_SETSTYLING command.
 
         For example, the following code applies style #3
-        to the first fivie characters in the second line
+        to the first five characters in the second line
         of the widget:
 
             SCISetStyling((0, 1), 5, 3)
@@ -933,9 +933,8 @@ class QtmacsScintilla(Qsci.QsciScintilla):
         """
         Pythonic wrapper for the SCI_SETSTYLINGEX command.
 
-        For example, the following code will fetch the
-        styling for the first five characters applies
-        it verbatim to the next five characters.
+        For example, the following code will fetch the styling for the first
+        five characters applies it verbatim to the next five characters.
 
             text, style = SCIGetStyledText((0, 0, 0, 5))
             SCISetStylingEx((0, 5), style)

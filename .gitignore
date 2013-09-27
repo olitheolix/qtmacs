@@ -1,0 +1,9 @@
+/doc/build/doctrees/
+/doc/build/html/
+/qtmacs/__pycache__/
+/qtmacs/applets/__pycache__/
+/qtmacs/extensions/__pycache__/
+/qtmacs/miniapplets/__pycache__/
+/demos/__pycache__/
+/doc/source/_static/.stub~
+/doc/source/code_snippets/__pycache__/

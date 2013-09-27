@@ -862,11 +862,20 @@ class QtmacsMain(QtCore.QObject):
         del qApp
 
         # ------------------------------------------------------------
+        # Add all subdirectories of 'modules/' to the path.
+        # ------------------------------------------------------------
+        # The 'modules' directory is one level above this file.
+        path, _ = os.path.split(qtmacs.qtmacsmain.__file__)
+        path = os.path.abspath(os.path.join(path, '..', 'modules'))
+        if os.path.exists(path):
+            for ii in os.listdir(path):
+                sys.path.insert(0, os.path.join(path, ii))
+        del path
+
+        # ------------------------------------------------------------
         # Load the global configuration file.
         # ------------------------------------------------------------
-        # Determine the path of this very file and add it to the
-        # Python load path. Then load the global configuration file
-        # which is in the same path.
+        # The global configuration file is in the same path as this file.
         path, _ = os.path.split(qtmacs.qtmacsmain.__file__)
         sys.path.insert(0, path)
         self.qteLogger.info('Loading global configuration file.')
@@ -2742,7 +2751,7 @@ class QtmacsMain(QtCore.QObject):
         path, name = os.path.split(fileName)
         name, ext = os.path.splitext(name)
 
-        # If the file name has a path prefix then search there, other
+        # If the file name has a path prefix then search there, otherwise
         # search the default paths for Python.
         if path == '':
             path = sys.path
