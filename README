@@ -10,7 +10,7 @@ code and widgets. Within Qtmacs, they provide the functionailty to
 eg. edit text, view a PDF file, or browse the web.
 
 Macros, on the other hand, govern the behaviour of individual widgets
-in response to keyboard input. They are are applicable to any Qt based
+in response to keyboard input. They are applicable to any Qt based
 widget.
 
 Both, applets and macros, are supplied via Python modules and can be
