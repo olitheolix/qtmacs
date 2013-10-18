@@ -36,7 +36,9 @@ except ImportError:
           'http://qtmacsdev.github.com/qtmacs/installation.html\n'
           'for installation instructions')
 
-sys.path.insert(0, '../')
+# Add the `qtmacs` package to Python's search path.
+path, _ = os.path.split(__file__)
+sys.path.insert(0, os.path.abspath(os.path.join(path, '..')))
 import qtmacs.qtmacsmain
 import qtmacs.type_check
 from qtmacs.exceptions import *
