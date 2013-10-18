@@ -525,17 +525,104 @@ class QtmacsSplitter(QtGui.QSplitter):
         self._qteAdmin.widgetSignature = '__QtmacsLayoutSplitter__'
         self._qteAdmin.parentWindow = parent_win
 
+        # Ensure the widgets in the splitter are updated while the user drags
+        # the handle.
+        self.setOpaqueResize(True)
+
+        # Intercept the splitter movements initiated by the user to resize the
+        # widgets inside the splitter accordingly.
+        self.splitterMoved.connect(self._splitterMovedEvent)
+
+    @QtCore.pyqtSlot(int, int)
+    def _splitterMovedEvent(self, pos, idx):
+        """
+        Slot for ``splitterMoved`` signal.
+
+        ``pos`` is the splitter handle distance (in pixels) from the
+          origin (ie. distance from left if it is a horizontal splitter, and
+          distance from top if it is vertical one).
+
+        The ``idx`` denotes the splitter handle index. This argument is always
+        zero because Qtmacs only ever adds two widgets inside, which means
+        there is at most one handle, and it must therefore have the index zero
+        (if there is only one widget in the splitter then it does not have a
+        handle, hence the ``splitterMoved`` signal will not emitted).
+
+        |Args|
+
+        * ``pos`` (**int**): new splitter position relative to the origin.
+        * ``idx`` (**int**): the splitter handle index (always in Qtmacs0>
+
+        |Returns|
+
+        * **None**
+
+        |Raises|
+
+        * **None**
+        """
+        # Adjust the sizes of the widgets inside the splitter according to
+        # the handle position.
+        self.qteAdjustWidgetSizes(pos)
+
+    @type_check
+    def qteAdjustWidgetSizes(self, handlePos: int=None):
+        """
+        Adjust the widget size inside the splitter according to ``handlePos``.
+
+        See ``pos`` argument in _qteSplitterMovedEvent for a more detailed
+        explanation.
+
+        If ``handlePos`` is **None**, then the widgets are assigne equal size.
+
+        |Args|
+
+        * ``handlePos`` (**int**): splitter position relative to the origin.
+
+        |Returns|
+
+        * **None**
+
+        |Raises|
+
+        * **QtmacsArgumentError** if at least one argument has an invalid type.
+        """
+        # Do not adjust anything if there are less than two widgets.
+        if self.count() < 2:
+            return
+        
+        if self.orientation() == QtCore.Qt.Horizontal:
+            totDim = self.size().width() - self.handleWidth()
+        else:
+            totDim = self.size().height() - self.handleWidth()
+
+        # Assign both widgets the same size if no handle position provided.
+        if handlePos is None:
+            handlePos = (totDim + self.handleWidth()) // 2
+
+        # Sanity check.
+        if not (0 <= handlePos <= totDim):
+            return
+
+        # Compute widget sizes according to handle position.
+        newSize = [handlePos, totDim - handlePos]
+
+        # Assign the widget sizes.
+        self.setSizes(newSize)
+
     def qteAddWidget(self, widget):
         """
         Add a widget to the splitter and make it visible.
 
-        The only two differences between this method and the native
-        ``QSplitter.insertWidget()`` method is that this one 1)
-        expects the widget to have a ``QtmacsAdmin`` structure (ie. to
-        be a ``QtmacsApplet`` or a ``QtmacsSplitter``) and 2) make the
-        widget visible automatically. Both is mostly for convenience
-        because adding a widget to the splitter in Qtmacs is
-        tantamount to displaying it.
+        The only differences between this- and the native
+        ``QSplitter.addWidget()`` method are
+
+        1. ``widget`` must have a ``QtmacsAdmin`` structure to ensure it is a
+           ``QtmacsApplet`` or a ``QtmacsSplitter``, 
+        2. ``widget`` is automatically made visible.
+
+        Both actions are mostly for convenience because adding ``widget`` to
+        a QtmacsSplitter is tantamount to displaying it.
 
         |Args|
 
@@ -549,30 +636,37 @@ class QtmacsSplitter(QtGui.QSplitter):
 
         * **None**
         """
-        QtGui.QSplitter.addWidget(self, widget)
+        # Add ``widget`` to the splitter.
+        self.addWidget(widget)
 
-        # If the widget is QtmacsSplitter then its show() methods has
-        # no argument, whereas any applet has an overloaded show()
-        # function.
+        # Show ``widget``. If it is a ``QtmacsSplitter`` instance then its
+        # show() methods has no argument, whereas ``QtmacsApplet`` instances
+        # have overloaded show() methods because they should not be called
+        # unless you really know what you are doing (it will mess with Qtmacs
+        # layout engine).
         if widget._qteAdmin.widgetSignature == '__QtmacsLayoutSplitter__':
             widget.show()
         else:
             widget.show(True)
+
+        # Adjust the sizes of the widgets inside the splitter according to
+        # the handle position.
+        self.qteAdjustWidgetSizes()
 
     def qteInsertWidget(self, idx, widget):
         """
         Insert ``widget`` to the splitter at the specified ``idx``
         position and make it visible.
 
-        The only two differences between this method and the native
-        ``QSplitter.insertWidget()`` method is that this one
+        The only differences between this- and the native
+        ``QSplitter.insertWidget()`` method are
 
-        1. expects the widget to have a ``QtmacsAdmin`` structure
-           (ie. to be a ``QtmacsApplet`` or a ``QtmacsSplitter``)
-        2. make the widget visible automatically.
+        1. ``widget`` must have a ``QtmacsAdmin`` structure to ensure it is a
+           ``QtmacsApplet`` or a ``QtmacsSplitter``, 
+        2. ``widget`` is automatically made visible.
 
-        Both are mostly for convenience because adding a ``widget`` to
-        the splitter in Qtmacs is tantamount to displaying it.
+        Both actions are mostly for convenience because adding ``widget`` to
+        a QtmacsSplitter is tantamount to displaying it.
 
         |Args|
 
@@ -588,15 +682,22 @@ class QtmacsSplitter(QtGui.QSplitter):
 
         * **None**
         """
-        QtGui.QSplitter.insertWidget(self, idx, widget)
+        # Insert the widget into the splitter.
+        self.insertWidget(idx, widget)
 
-        # If the widget is QtmacsSplitter then its show() methods has
-        # no argument, whereas any applet has an overloaded show()
-        # function.
+        # Show ``widget``. If it is a ``QtmacsSplitter`` instance then its
+        # show() methods has no argument, whereas ``QtmacsApplet`` instances
+        # have overloaded show() methods because they should not be called
+        # unless you really know what you are doing (it will mess with Qtmacs
+        # layout engine).
         if widget._qteAdmin.widgetSignature == '__QtmacsLayoutSplitter__':
             widget.show()
         else:
             widget.show(True)
+
+        # Adjust the sizes of the widgets inside the splitter according to
+        # the handle position.
+        self.qteAdjustWidgetSizes()
 
     def qteParentWindow(self):
         """
@@ -1005,23 +1106,20 @@ class QtmacsMain(QtCore.QObject):
 
         Facts:
 
-          * There are windows, applets in windows, and widgets in
-            applets.
-          * The currently active applet is
-            QtmacsMain._qteActiveApplet.
+          * There are windows, applets in windows, and widgets in applets.
+          * The currently active applet is QtmacsMain._qteActiveApplet.
           * The currently active widget inside that applet is
             QtmacsApplet._qteActiveWidget.
-          * No one except the focus manager calls the Qt native
-            ``setFocus`` or ``activateWindow`` methods.
+          * No one except the focus manager calls the Qt native ``setFocus``
+            or ``activateWindow`` methods.
           * To queue an applet/widget for activation call
             ``qteMake{Applet,Widget}Active``. This will update the
             aforementioned variables ``_qteActiveApplet`` and
             ``_qteActiveWidget`` attributes in ``QtmacsMain`` and
             ``QtmacsApplet``, respectively.
-          * The focus manager will inspect these variables and make
-            the specified applet and widget active, if they still
-            exists. If they do not exists, it will automatically pick
-            a substitute.
+          * The focus manager will inspect these variables and make the
+            specified applet and widget active, if they still exists. If they
+            do not exists, it will automatically pick a substitute.
 
         The tasks of the focus manager are, in this order:
 
@@ -1029,7 +1127,6 @@ class QtmacsMain(QtCore.QObject):
             go into damage control if this does not check out.
           * Activate the top level window containing ``_qteActiveApplet``.
           * Focus the active widget ``_qteActiveWidget`` inside the applet.
-
 
         |Args|
 
@@ -1540,8 +1637,7 @@ class QtmacsMain(QtCore.QObject):
             self._qteActiveApplet = self.qteNextApplet(
                 windowObj=self._qteWindowList[0])
 
-        # Move the mini applet if it is currently in the doomed
-        # window.
+        # Move the mini applet if it is currently in the doomed window.
         if self._qteMiniApplet is not None:
             if self._qteMiniApplet.qteParentWindow() is windowObj:
                 # Re-parent the mini applet to the splitter in the new
@@ -2103,29 +2199,23 @@ class QtmacsMain(QtCore.QObject):
 
         * **QtmacsArgumentError** if at least one argument has an invalid type.
         """
-        # Compile a list of all widgets in the splitter and check if
-        # one of them is the desired ``appletObj``.
-        widget_in_splitter = [split.widget(ii) for ii in range(split.count())]
-        if appletObj in widget_in_splitter:
-            return split
+        def splitterIter(split):
+            """
+            Iterator over all QtmacsSplitters.
+            """
+            for idx in range(split.count()):
+                subSplitter = split.widget(idx)
+                subID = subSplitter._qteAdmin.widgetSignature
+                if subID == '__QtmacsLayoutSplitter__':
+                    yield from splitterIter(subSplitter)
+            yield split
 
-        # Retain only those widgets that are QtmacsSplitter instances.
-        split_in_splitter = [
-            _ for _ in widget_in_splitter
-            if _._qteAdmin.widgetSignature == '__QtmacsLayoutSplitter__']
+        # Traverse all QtmacsSplitter until ``appletObj`` was found.
+        for curSplit in splitterIter(split):
+            if appletObj in curSplit.children():
+                return curSplit
 
-        # Iterate over these splitters and by recursively calling ourselves.
-        for nextSplit in split_in_splitter:
-            ret = self._qteFindAppletInSplitter(appletObj, nextSplit)
-
-            # If ``nextSplit`` holds the desired ``appletObj`` return
-            # a reference to it.
-            if ret is not None:
-                return ret
-
-        # The desired ``appletObj`` was not found in any of the
-        # splitter widgets inside the current splitter, or any of the
-        # children of these splitters.
+        # No splitter holds ``appletObj``.
         return None
 
     @type_check
@@ -2182,8 +2272,7 @@ class QtmacsMain(QtCore.QObject):
                 self.qteLogger.error(msg, stack_info=True)
                 return
 
-        # Obtain the Qt constant that defines the horizontal or
-        # vertical split.
+        # Convert ``splitHoriz`` to the respective Qt constant.
         if splitHoriz:
             splitOrientation = QtCore.Qt.Horizontal
         else:
@@ -2214,8 +2303,8 @@ class QtmacsMain(QtCore.QObject):
             return True
 
         # ------------------------------------------------------------
-        # If we got this far the root splitter contains at least one
-        # element.
+        # The root splitter contains at least one widget, if we got
+        # this far.
         # ------------------------------------------------------------
 
         # Shorthand to last active applet in the current window. Query
@@ -2227,8 +2316,8 @@ class QtmacsMain(QtCore.QObject):
         # Get a reference to the splitter in which the currently
         # active applet lives. This may be the root splitter, or one
         # of its child splitters.
-        split = self._qteFindAppletInSplitter(curApp,
-                                              windowObj.qteAppletSplitter)
+        split = self._qteFindAppletInSplitter(
+            curApp, windowObj.qteAppletSplitter)
         if split is None:
             msg = 'Active applet <b>{}</b> not in the layout.'
             msg = msg.format(curApp.qteAppletID())
@@ -2239,39 +2328,38 @@ class QtmacsMain(QtCore.QObject):
         # splitter contains only a single element, then simply add the
         # new applet as the second element and return.
         if split is windowObj.qteAppletSplitter:
-            if windowObj.qteAppletSplitter.count() == 1:
-                windowObj.qteAppletSplitter.qteAddWidget(newAppObj)
-                windowObj.qteAppletSplitter.setOrientation(splitOrientation)
+            if split.count() == 1:
+                split.qteAddWidget(newAppObj)
+                split.setOrientation(splitOrientation)
                 return True
 
         # ------------------------------------------------------------
-        # If we got this far the splitter (root or not) contains two
-        # elements
+        # The splitter (root or not) contains two widgets, if we got
+        # this far.
         # ------------------------------------------------------------
 
         # Determine the index of the applet inside the splitter.
         curAppIdx = split.indexOf(curApp)
 
-        # Create a new splitter and move 'curApp' and the previously
-        # invisible ``newAppObj`` into it. Then insert this new
-        # splitter at the position where the old applet was taken
-        # from. Note: the widgets are inserted with the
-        # ``qteAddWidget`` function (because they are Qtmacs applets)
-        # but the splitter is added with ``insertWidget`` and NOT with
-        # ``qteInsertWidget``. The reason is that the splitter is not
-        # a Qtmacs applet and therefore does not require the extra TLC
-        # for applets in terms of how and where to show them.
+        # Create a new splitter and populate it with 'curApp' and the
+        # previously invisible ``newAppObj``. Then insert this new splitter at
+        # the position where the old applet was taken from. Note: widgets are
+        # inserted with ``qteAddWidget`` (because they are ``QtmacsApplet``
+        # instances), whereas splitters are added with ``insertWidget``, NOT
+        # ``qteInsertWidget``. The reason is that splitters do not require the
+        # extra TLC necessary for applets in terms of how and where to show
+        # them.
         newSplit = QtmacsSplitter(splitOrientation, windowObj)
         curApp.setParent(None)
         newSplit.qteAddWidget(curApp)
         newSplit.qteAddWidget(newAppObj)
         split.insertWidget(curAppIdx, newSplit)
 
-        # Ensure that the applets inside the new splitter share half
-        # the space. If this is impossible then the Qt layout engine
-        # will take care of it.
-        _ = int(sum(newSplit.sizes()) / 2)
-        newSplit.setSizes([_, _])
+        # Adjust the size of two widgets in ``split`` (ie. ``newSplit`` and
+        # whatever other widget) to take up equal space. The same adjusment is
+        # made for ``newSplit``, but there the ``qteAddWidget`` methods have
+        # already taken care of it.
+        split.qteAdjustWidgetSizes()
         return True
 
     @type_check
@@ -2360,8 +2448,8 @@ class QtmacsMain(QtCore.QObject):
             return
 
         # Search for the splitter that contains 'oldAppObj'.
-        split = self._qteFindAppletInSplitter(oldAppObj,
-                                              windowObj.qteAppletSplitter)
+        split = self._qteFindAppletInSplitter(
+            oldAppObj, windowObj.qteAppletSplitter)
         if split is None:
             msg = ('Applet <b>{}</b> not replaced because it is not'
                    'in the layout.'.format(oldAppObj.qteAppletID()))
@@ -2371,12 +2459,14 @@ class QtmacsMain(QtCore.QObject):
         # Determine the position of oldAppObj inside the splitter.
         oldAppIdx = split.indexOf(oldAppObj)
 
-        # Replace oldAppObj with newAppObj. To do so, first insert
-        # newAppObj into the splitter at the position of oldAppObj and
-        # then remove oldAppObj by re-parenting it and making it
-        # invisible.
+        # Replace oldAppObj with newAppObj but maintain the widget sizes. To do
+        # so, first insert newAppObj into the splitter at the position of
+        # oldAppObj. Afterwards, remove oldAppObj by re-parenting it, make
+        # it invisible, and restore the widget sizes.
+        sizes = split.sizes()
         split.qteInsertWidget(oldAppIdx, newAppObj)
         oldAppObj.hide(True)
+        split.setSizes(sizes)
 
     @type_check
     def qteRemoveAppletFromLayout(self, applet: (QtmacsApplet, str)):

@@ -155,6 +155,15 @@ class QtmacsApplet(QtGui.QWidget):
         # The default applet signature is identical with the class name.
         self.qteSetAppletSignature(self.__class__.__name__)
 
+        # Instruct the Qt layout enginge to ignore the sizehint of this
+        # applet because Qtmacs will implicitly specify it via the splitter in
+        # which this applet resides.
+        sp = self.sizePolicy()
+        pol = QtGui.QSizePolicy.Ignored
+        sp.setHorizontalPolicy(pol)
+        sp.setVerticalPolicy(pol)
+        self.setSizePolicy(sp)
+
     @classmethod
     def __qteRegisterAppletInit__(cls):
         """
