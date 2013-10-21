@@ -28,8 +28,8 @@ https://github.com/qtmacsdev/qtmacs
 REQUIREMENTS
 ============
 
-* Python 3.x
-* PyQt4
+* Python >= 3.3
+* PyQt >= 4.8
 
 Older versions of PyQt4 may work as well but have not been tested.
 

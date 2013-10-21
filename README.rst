@@ -17,19 +17,23 @@ Both, applets and macros, are supplied via Python modules and can be
 changed during runtime to customise the functionality and behaviour of
 Qtmacs as required.
 
+The screenshot below shows applets for Bash (running Midnight
+Commander), web browsing, Qtmacs documentation, and source code.
+
+.. image:: doc/source/images/qtmacs.png
 
 PROJECT STATUS
 ==============
 
-Qtmacs is currently in alpha status yet useful enough to demonstrate the
-concept.
+Qtmacs is currently an alpha version, yet useful enough to demonstrate
+the concepts.
 
 
 REQUIREMENTS
 ============
 
-* Python 3.x
-* PyQt4
+* Python >= 3.3
+* PyQt >= 4.8
 
 Older versions of PyQt4 may work as well but have not been tested.
 
