@@ -54,7 +54,7 @@ except ImportError:
 
 # Instantiate the WebBrowser applet and point it to the
 # documentation.
-url = 'http://qtmacsdev.github.com/qtmacs/titlepage.html'
+url = 'http://olitheolix.github.com/qtmacs/titlepage.html'
 appObj = qteMain.qteNewApplet('WebBrowser', url)
 if appObj is not None:
     qteMain.qteMakeAppletActive(appObj)

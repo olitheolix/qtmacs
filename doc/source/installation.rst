@@ -110,6 +110,6 @@ To work directly with the source code:
 
 .. code-block:: bash
 
-   git clone https://github.com/qtmacsdev/qtmacs.git
+   git clone https://github.com/olitheolix/qtmacs.git
    cd qtmacs/bin
    ./qtmacs

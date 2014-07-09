@@ -808,7 +808,7 @@ demonstrates its use in a Qtmacs applet.
 
 .. note:: If anyone knows how to take the hassle out of this (eg. with
           statically compiled libraries for all major platforms), then
-	  please `drop me a line <mailto:qtmacsdev@gmail.com>`_.
+	  please `drop me a line <mailto:olitheolix@gmail.com>`_.
 
 .. _CompilePoppler:
 

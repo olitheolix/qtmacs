@@ -42,13 +42,13 @@ INSTALLATION
 
 To install Qtmacs on Windows, or use package managers on Linux based
 distributions, please refer to the `installation guide
-<http://qtmacsdev.github.com/qtmacs/installation.html>`_.
+<http://olitheolix.github.com/qtmacs/installation.html>`_.
 
 To try out the source code directly use:
 
 .. code-block:: bash
 
-   git clone https://github.com/qtmacsdev/qtmacs.git
+   git clone https://github.com/olitheolix/qtmacs.git
    cd qtmacs/bin
    ./qtmacs
 
@@ -57,7 +57,7 @@ DOCUMENTATION
 =============
 
 The full documentation, including screenshots, is available at
-http://qtmacsdev.github.com/qtmacs/titlepage.html
+http://olitheolix.github.com/qtmacs/titlepage.html
 
 
 There is also a discussion group at

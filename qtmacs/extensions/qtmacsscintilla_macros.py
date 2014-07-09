@@ -1,4 +1,4 @@
-# Copyright 2012, Oliver Nagy <qtmacsdev@gmail.com>
+# Copyright 2012, Oliver Nagy <olitheolix@gmail.com>
 #
 # This file is part of Qtmacs.
 #

@@ -91,6 +91,6 @@ A just-for-fun project to see if it can be done.
 Contact
 =======
 If you have any questions, feedback, or would like to help, please
-drop me a line at `qtmacsdev@gmail.com <mailto:qtmacsdev@gmail.com>`_.
+drop me a line at `olitheolix@gmail.com <mailto:olitheolix@gmail.com>`_.
 
 Thank you for visiting my project page.

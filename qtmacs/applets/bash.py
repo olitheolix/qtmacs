@@ -1,4 +1,4 @@
-# Copyright 2012, Oliver Nagy <qtmacsdev@gmail.com>
+# Copyright 2012, Oliver Nagy <olitheolix@gmail.com>
 #
 # This file is part of Qtmacs.
 #
@@ -19,16 +19,16 @@
 An applet with an interactive Bash.
 
 This applet requires the `Bash` program and the ``QBash`` widget
-(https://github.com/qtmacsdev/qbash). The former should be available on any
+(https://github.com/olitheolix/qbash). The former should be available on any
 Unix-like system, whereas the latter must be either in the Python search path,
 or copied to the `qtmacsroot/modules` directory. For instance, to get both
 Qtmacs and QBash:
 
 .. code-block:: bash
 
-   git clone https://github.com/qtmacsdev/qtmacs qtmacsroot
+   git clone https://github.com/olitheolix/qtmacs qtmacsroot
    cd qtmacsroot/modules
-   git clone https://github.com/qtmacsdev/qbash
+   git clone https://github.com/olitheolix/qbash
 
 As with every applet, do **not** use::
 
